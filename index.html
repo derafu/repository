@@ -1,1 +1,146 @@
-Soon.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derafu: Repository - Lightweight File Data Source Management for PHP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.0/css/all.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown-light.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://derafu.org/foundation/css/styles.min.css" rel="stylesheet" />
+    </head>
+<body class="derafu-theme-earthstone">
+                <div id="header-container" class="sticky-top"></div>
+    
+            <main>
+            <div class="container py-4">
+    <div class="markdown-body"><h1><a id="content-derafu-repository---lightweight-file-data-source-management-for-php" href="index.html#content-derafu-repository---lightweight-file-data-source-management-for-php" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Derafu: Repository - Lightweight File Data Source Management for PHP</h1>
+<p><a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://github.com/derafu/repository/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://github.com/derafu/repository/actions/workflows/ci.yml/badge.svg?branch=main&amp;event=push" alt="CI Workflow" /></a>
+<a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a></p>
+<p>A lightweight, flexible PHP library for managing data repositories with multiple data sources and seamless integration with PHP frameworks.</p>
+<h2><a id="content-why-derafurepository" href="index.html#content-why-derafurepository" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Why Derafu\Repository?</h2>
+<h3><a id="content--simplified-data-management" href="index.html#content--simplified-data-management" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>🚀 <strong>Simplified Data Management</strong></h3>
+<p>Traditional PHP data repositories often:</p>
+<ul>
+<li>Are tightly coupled to specific storage mechanisms.</li>
+<li>Require complex configuration.</li>
+<li>Lack flexibility across different data sources.</li>
+</ul>
+<h3><a id="content--what-makes-derafurepository-unique" href="index.html#content--what-makes-derafurepository-unique" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>🔥 <strong>What Makes Derafu\Repository Unique?</strong></h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Derafu\Repository</th>
+<th>Traditional Repositories</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>File-Based Data Sources</strong></td>
+<td>✅ Yes</td>
+<td>❌ No</td>
+</tr>
+<tr>
+<td><strong>Lightweight Design</strong></td>
+<td>✅ Yes</td>
+<td>❌ No</td>
+</tr>
+<tr>
+<td><strong>Simple Configuration</strong></td>
+<td>✅ Yes</td>
+<td>❌ No</td>
+</tr>
+<tr>
+<td><strong>Framework Agnostic</strong></td>
+<td>✅ Yes</td>
+<td>⚠️ Varies</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2><a id="content-features" href="index.html#content-features" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Features</h2>
+<ul>
+<li>✅ <strong>Multiple Data Source Support</strong> – Load data from PHP arrays, JSON, YAML files.</li>
+<li>✅ <strong>Generic Entity Handling</strong> – Work with any type of data structure.</li>
+<li>✅ <strong>Flexible Querying</strong> – Find, filter, and order data with ease.</li>
+<li>✅ <strong>Doctrine Collections Compatible</strong> – Use Doctrine Criteria for advanced filtering.</li>
+<li>✅ <strong>Zero Heavy Dependencies</strong> – Lightweight and performance-focused.</li>
+<li>✅ <strong>PHP 8+ Ready</strong> – Leverages modern PHP features.</li>
+</ul>
+<hr />
+<h2><a id="content-installation" href="index.html#content-installation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Installation</h2>
+<p>Install via Composer:</p>
+<pre><code class="language-bash">composer require derafu/repository
+</code></pre>
+<h2><a id="content-basic-usage" href="index.html#content-basic-usage" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Basic Usage</h2>
+<pre><code class="language-php">use Derafu\Repository\Repository;
+
+// Load data from a PHP file or array.
+$data = [
+    'products' =&gt; [
+        'prod-001' =&gt; [
+            'name' =&gt; 'Laptop XPS',
+            'category' =&gt; 'computers',
+            'price' =&gt; 1299.99,
+        ],
+        // More products...
+    ],
+];
+
+// Create a repository.
+$repository = new Repository($data, idAttribute: 'id');
+
+// Find all products.
+$allProducts = $repository-&gt;findAll();
+
+// Find products by criteria.
+$computerProducts = $repository-&gt;findBy([
+    'category' =&gt; 'computers'
+]);
+
+// Find a single product.
+$laptop = $repository-&gt;findOneBy([
+    'name' =&gt; 'Laptop XPS',
+]);
+</code></pre>
+<h2><a id="content-advanced-usage-with-doctrine-criteria" href="index.html#content-advanced-usage-with-doctrine-criteria" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Advanced Usage with Doctrine Criteria</h2>
+<pre><code class="language-php">use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Order;
+
+// Advanced filtering with Doctrine Criteria.
+$expensiveProducts = $repository-&gt;findByCriteria(
+    Criteria::create()
+        -&gt;where(Criteria::expr()-&gt;gt('price', 1000))
+        -&gt;orderBy(['price' =&gt; Order::Descending])
+);
+</code></pre>
+<h2><a id="content-supported-data-sources" href="index.html#content-supported-data-sources" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Supported Data Sources</h2>
+<ul>
+<li>PHP Arrays.</li>
+<li>PHP Files returning arrays.</li>
+<li>JSON Files.</li>
+<li>YAML Files.</li>
+</ul>
+<h2><a id="content-performance-considerations" href="index.html#content-performance-considerations" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Performance Considerations</h2>
+<ul>
+<li>Optimized for small to medium-sized datasets.</li>
+<li>In-memory data management.</li>
+<li>Recommended for configuration, lookup tables, and static data.</li>
+</ul>
+<h2><a id="content-contributing" href="index.html#content-contributing" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Contributing</h2>
+<p>Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.</p>
+<h2><a id="content-license" href="index.html#content-license" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>License</h2>
+<p>This package is open-sourced software licensed under the <a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://opensource.org/licenses/MIT">MIT license</a>.</p>
+</div>
+</div>
+        </main>
+    
+            <div id="footer-container"></div>
+<script src="https://derafu.org/foundation/js/derafu.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    </body>
+</html>
