@@ -1,7 +1,11 @@
 # Derafu: Repository - Lightweight File Data Source Management for PHP
 
-[![CI Workflow](https://github.com/derafu/repository/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/derafu/repository/actions/workflows/ci.yml?query=branch%3Amain)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+![GitHub last commit](https://img.shields.io/github/last-commit/derafu/repository/main)
+![CI Workflow](https://github.com/derafu/repository/actions/workflows/ci.yml/badge.svg?branch=main&event=push)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/derafu/repository)
+![GitHub Issues](https://img.shields.io/github/issues-raw/derafu/repository)
+![Total Downloads](https://poser.pugx.org/derafu/repository/downloads)
+![Monthly Downloads](https://poser.pugx.org/derafu/repository/d/monthly)
 
 A lightweight, flexible PHP library for managing data repositories with multiple data sources and seamless integration with PHP frameworks.
 
