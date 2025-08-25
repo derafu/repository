@@ -16,16 +16,16 @@ use Derafu\Repository\Contract\EntityInterface;
 use Derafu\Repository\Exception\EntityException;
 
 /**
- * Clase genérica para el manejo de entidades de repositorios.
+ * Generic class for repository entity management.
  *
- * Esta clase es útil cuando no se desea crear explícitamente cada clase de cada
- * entidad. Sin embargo, es desaconsejado su uso y se recomienda crear clases
- * para cada entidad que se requiera.
+ * This class is useful when you don't want to explicitly create each class for
+ * each entity. However, its use is discouraged and it's recommended to create
+ * classes for each required entity.
  */
 class Entity implements EntityInterface
 {
     /**
-     * Atributos de la entidad.
+     * Entity attributes.
      *
      * @var array
      */
@@ -64,7 +64,7 @@ class Entity implements EntityInterface
     {
         if (!$this->hasAttribute($name)) {
             throw new EntityException(sprintf(
-                'No existe el atributo %s en la entidad %s.',
+                'Attribute %s does not exist in entity %s.',
                 $name,
                 static::class
             ));
@@ -90,11 +90,11 @@ class Entity implements EntityInterface
     }
 
     /**
-     * Método mágico para asignar el valor de un atributo como si estuviese
-     * definido en la clase.
+     * Magic method to assign a value to an attribute as if it were defined in
+     * the class.
      *
-     * Se ejecuta al escribir datos sobre propiedades inaccesibles (protegidas
-     * o privadas) o inexistentes.
+     * Executed when writing data to inaccessible (protected or private) or
+     * non-existent properties.
      *
      * @param string $name
      * @param mixed $value
@@ -106,11 +106,11 @@ class Entity implements EntityInterface
     }
 
     /**
-     * Método mágico para obtener el valor de un atributo como si estuviese
-     * definido en la clase.
+     * Magic method to get the value of an attribute as if it were defined in
+     * the class.
      *
-     * Se utiliza para consultar datos a partir de propiedades inaccesibles
-     * (protegidas o privadas) o inexistentes.
+     * Used to query data from inaccessible (protected or private) or
+     * non-existent properties.
      *
      * @param string $name
      * @return mixed
@@ -121,11 +121,11 @@ class Entity implements EntityInterface
     }
 
     /**
-     * Método mágico para saber si un atributo existe, y tiene valor, como si
-     * estuviese definido en la clase.
+     * Magic method to check if an attribute exists and has a value, as if it
+     * were defined in the class.
      *
-     * Se lanza al llamar a isset() o a empty() sobre propiedades inaccesibles
-     * (protegidas o privadas) o inexistentes.
+     * Triggered when calling isset() or empty() on inaccessible (protected or
+     * private) or non-existent properties.
      *
      * @param string $name
      * @return boolean
@@ -136,11 +136,11 @@ class Entity implements EntityInterface
     }
 
     /**
-     * Método mágico para desasignar el valor de un atributo como si estuviese
-     * definido en la clase.
+     * Magic method to unassign the value of an attribute as if it were defined
+     * in the class.
      *
-     * Se invoca cuando se usa unset() sobre propiedades inaccesibles
-     * (protegidas o privadas) o inexistentes.
+     * Invoked when using unset() on inaccessible (protected or private) or
+     * non-existent properties.
      *
      * @param string $name
      * @return void
@@ -151,10 +151,10 @@ class Entity implements EntityInterface
     }
 
     /**
-     * Es lanzado al invocar un método inaccesible en un contexto de objeto.
+     * Triggered when invoking an inaccessible method in an object context.
      *
-     * Específicamente procesa las llamadas a los "accessors" ("getters") y
-     * "mutators" ("setters").
+     * Specifically processes calls to "accessors" ("getters") and "mutators"
+     * ("setters").
      *
      * @param string $name
      * @param array $arguments
@@ -162,28 +162,28 @@ class Entity implements EntityInterface
      */
     public function __call(string $name, array $arguments)
     {
-        // Si es un "accessor" getXyz() se procesa.
+        // If it's an "accessor" getXyz() it's processed.
         $pattern = '/^get([A-Z][a-zA-Z0-9]*)$/';
         if (preg_match($pattern, $name, $matches)) {
             return $this->getAttribute(lcfirst($matches[1]));
         }
 
-        // Si es un "mutator" setXyz() se procesa.
+        // If it's a "mutator" setXyz() it's processed.
         $pattern = '/^set([A-Z][a-zA-Z0-9]*)$/';
         if (preg_match($pattern, $name, $matches)) {
             return $this->setAttribute(lcfirst($matches[1]), ...$arguments);
         }
 
-        // Si el método no existe se genera una excepción.
+        // If the method doesn't exist an exception is generated.
         throw new EntityException(sprintf(
-            'El método %s::%s() no existe.',
+            'Method %s::%s() does not exist.',
             get_debug_type($this),
             $name,
         ));
     }
 
     /**
-     * Es lanzado al invocar un método inaccesible en un contexto estático.
+     * Triggered when invoking an inaccessible method in a static context.
      *
      * @param string $name
      * @param array $arguments
@@ -191,9 +191,9 @@ class Entity implements EntityInterface
      */
     public static function __callStatic(string $name, array $arguments)
     {
-        // Si el método no existe se genera una excepción.
+        // If the method doesn't exist an exception is generated.
         throw new EntityException(sprintf(
-            'El método %s::%s() no existe.',
+            'Method %s::%s() does not exist.',
             static::class,
             $name,
         ));

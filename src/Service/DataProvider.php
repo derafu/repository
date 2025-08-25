@@ -10,7 +10,7 @@ declare(strict_types=1);
  * See LICENSE file for more details.
  */
 
-namespace Derafu\Repository\Worker;
+namespace Derafu\Repository\Service;
 
 use ArrayObject;
 use Derafu\Config\Trait\ConfigurableTrait;
@@ -21,14 +21,14 @@ use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Proveedor de datos.
+ * Data provider.
  */
 class DataProvider implements DataProviderInterface
 {
     use ConfigurableTrait;
 
     /**
-     * Esquema de configuración del worker.
+     * Worker configuration schema.
      *
      * @var array
      */
@@ -50,46 +50,53 @@ class DataProvider implements DataProviderInterface
     ];
 
     /**
-     * Listado de fuentes de datos de repositorios de entidades.
+     * List of entity repository data sources.
      *
-     * Es una mapa que contiene en el índice la clase de la entidad asociada al
-     * origen y en el valor el origen.
+     * It's a map that contains in the index the entity class associated with
+     * the source and in the value the source.
      *
-     * Si el índice no es una clase válida se mapeará a una clase de entidad
-     * estándar por defecto.
+     * If the index is not a valid class it will be mapped to a default
+     * standard entity class.
      *
-     * La entidad puede proporcionar un repositorio personalizado para su
-     * gestión.
+     * The entity can provide a custom repository for its management.
      *
-     * Un mismo origen (valor) pueden estar en diferentes entidades (índice).
+     * The same source (value) can be in different entities (index).
      *
      * @var array<string, string>
      */
     private array $sources;
 
     /**
-     * Instancia para acceder a una caché a buscar los datos.
+     * Instance to access a cache to search for data.
      *
      * @var CacheInterface|null
      */
     private ?CacheInterface $cache;
 
     /**
-     * Orígenes de datos en memoria que ya han sido cargado sus datos.
+     * In-memory data sources that have already had their data loaded.
      *
      * @var array<string,ArrayObject>
      */
     private array $loaded;
 
     /**
-     * Constructor del worker.
+     * Worker constructor.
      *
-     * @param array<string,string> $sources Origenes de datos (ID y origen).
+     * @param array<string,string> $sources Data sources (ID and source).
+     * @param CacheInterface|null $cache Cache instance.
+     * @param array $config Configuration.
      */
-    public function __construct(array $sources = [], ?CacheInterface $cache = null)
-    {
+    public function __construct(
+        array $sources = [],
+        ?CacheInterface $cache = null,
+        array $config = []
+    ) {
         $this->sources = $sources;
         $this->cache = $cache;
+        if (!empty($config)) {
+            $this->setConfiguration($config);
+        }
     }
 
     /**
@@ -97,62 +104,62 @@ class DataProvider implements DataProviderInterface
      */
     public function fetch(string $source): ArrayObject
     {
-        // Si el origen no está cargado se carga.
+        // If the source is not loaded it's loaded.
         if (!isset($this->loaded[$source])) {
             $data = $this->fetchData($source);
 
             $normalizationConfig = $this->getConfiguration()->get(
                 'normalization'
-            );
+            )->all();
             $data = $this->normalizeData($data, $normalizationConfig);
 
             $this->loaded[$source] = new ArrayObject($data);
         }
 
-        // Entregar los datos cargados del origen.
+        // Return loaded data from the source.
         return $this->loaded[$source];
     }
 
     /**
-     * Centraliza la carga de datos para un origen.
+     * Centralizes data loading for a source.
      *
-     * Esto permite cargar los datos desde una caché, archivos o en el futuro
-     * otros orígenes donde puedan estar los datos.
+     * This allows loading data from a cache, files or in the future other
+     * sources where data might be located.
      *
      * @param string $source
      * @return array
      */
     private function fetchData(string $source): array
     {
-        // Cargar los datos del origen desde una caché.
+        // Load source data from a cache.
         $data = $this->fetchDataFromCacheSource($source);
         if ($data !== null) {
             return $data;
         }
 
-        // Si no hay fuente de datos para el origen se genera un error.
+        // If there's no data source for the source an error is generated.
         if (!isset($this->sources[$source])) {
             throw new DataProviderException(sprintf(
-                'No existe un origen de datos configurado para de %s.',
+                'No data source configured for %s.',
                 $source
             ));
         }
 
-        // Cargar los datos del origen desde un archivo.
+        // Load source data from a file.
         $data = $this->fetchDataFromFileSource($source);
 
-        // Guardar los datos en caché.
+        // Save data in cache.
         if (isset($this->cache)) {
             $key = $this->createCacheKey($source);
             $this->cache->set($key, $data);
         }
 
-        // Entregar los datos encontrados.
+        // Return found data.
         return $data;
     }
 
     /**
-     * Carga los datos del origen desde una caché (si está disponible).
+     * Loads source data from a cache (if available).
      *
      * @param string $source
      * @return array|null
@@ -169,9 +176,9 @@ class DataProvider implements DataProviderInterface
     }
 
     /**
-     * Carga los datos del origen desde un archivo.
+     * Loads source data from a file.
      *
-     * El archivo puede ser: .php, .json o .yaml
+     * The file can be: .php, .json or .yaml
      *
      * @param string $source
      * @return array
@@ -198,7 +205,7 @@ class DataProvider implements DataProviderInterface
 
         if (!is_array($data)) {
             throw new DataProviderException(sprintf(
-                'Los datos del origen %s no son válidos para ser usados como origen de datos. Ruta: %s.',
+                'Data from source %s is not valid to be used as a data source. Path: %s.',
                 $source,
                 $filepath
             ));
@@ -208,10 +215,9 @@ class DataProvider implements DataProviderInterface
     }
 
     /**
-     * Maneja el caso cuando una extensión de archivo no es soportada.
+     * Handles the case when a file extension is not supported.
      *
-     * Funciona como "hook" para personalizar mediante herencia el
-     * comportamiento.
+     * Works as a "hook" to customize behavior through inheritance.
      *
      * @param string $source
      * @param string $filepath
@@ -224,7 +230,7 @@ class DataProvider implements DataProviderInterface
         string $extension
     ): array {
         throw new DataProviderException(sprintf(
-            'Formato de archivo %s del origen de datos %s no es soportado. Ruta: %s.',
+            'File format %s from data source %s is not supported. Path: %s.',
             $extension,
             $source,
             $filepath
@@ -232,8 +238,8 @@ class DataProvider implements DataProviderInterface
     }
 
     /**
-     * Normaliza los datos en caso que sea un arreglo de valores y no un arreglo
-     * de arreglos.
+     * Normalizes data in case it's an array of values and not an array of
+     * arrays.
      *
      * @param array $data
      * @return array<int|string, array>
@@ -255,10 +261,10 @@ class DataProvider implements DataProviderInterface
     }
 
     /**
-     * Crea la llave a partir del identificador del origen de datos.
+     * Creates the key from the data source identifier.
      *
-     * @param string $source Identificador del origen de datos.
-     * @return string Llave para utilizar con la caché.
+     * @param string $source Data source identifier.
+     * @return string Key to use with the cache.
      */
     private function createCacheKey(string $source): string
     {

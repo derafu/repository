@@ -16,38 +16,38 @@ use Derafu\Container\Contract\ContainerInterface;
 use Doctrine\Common\Collections\Criteria;
 
 /**
-* Interfaz para repositorios de objetos/entidades.
+* Interface for object/entity repositories.
 *
-* Proporciona métodos estándar para acceder y buscar objetos/entidades desde
-* una fuente de datos.
+* Provides standard methods to access and search objects/entities from a data
+* source.
 */
 interface RepositoryInterface extends ContainerInterface
 {
     /**
-     * Encuentra un objeto por su identificador.
+     * Finds an object by its identifier.
      *
-     * @param mixed $id Identificador del objeto
-     * @param mixed $lockMode No utilizado en esta implementación.
-     * @param mixed $lockVersion No utilizado en esta implementación.
-     * @return object|null El objeto encontrado o null si no existe
+     * @param mixed $id Object identifier
+     * @param mixed $lockMode Not used in this implementation.
+     * @param mixed $lockVersion Not used in this implementation.
+     * @return object|null The found object or null if it doesn't exist
      */
     public function find($id, $lockMode = null, $lockVersion = null): ?object;
 
     /**
-     * Encuentra todos los objetos en el repositorio.
+     * Finds all objects in the repository.
      *
-     * @return object[] Array de objetos encontrados
+     * @return object[] Array of found objects
      */
     public function findAll(): array;
 
     /**
-     * Encuentra objetos según criterios específicos.
+     * Finds objects according to specific criteria.
      *
-     * @param array $criteria Criterios de búsqueda en formato ['campo' => 'valor'].
-     * @param array|null $orderBy Criterios de ordenamiento ['campo' => 'ASC|DESC'].
-     * @param int|null $limit Cantidad máxima de resultados a retornar.
-     * @param int|null $offset Cantidad de resultados a saltar.
-     * @return object[] Array de objetos que cumplen los criterios.
+     * @param array $criteria Search criteria in format ['field' => 'value'].
+     * @param array|null $orderBy Ordering criteria ['field' => 'ASC|DESC'].
+     * @param int|null $limit Maximum number of results to return.
+     * @param int|null $offset Number of results to skip.
+     * @return object[] Array of objects that meet the criteria.
      */
     public function findBy(
         array $criteria,
@@ -57,41 +57,41 @@ interface RepositoryInterface extends ContainerInterface
     ): array;
 
     /**
-     * Encuentra un único objeto según criterios específicos.
+     * Finds a single object according to specific criteria.
      *
-     * @param array $criteria Criterios de búsqueda en formato ['campo' => 'valor'].
-     * @param array|null $orderBy Criterios de ordenamiento ['campo' => 'ASC|DESC'].
-     * @return object|null El primer objeto que cumple los criterios o null si no existe.
+     * @param array $criteria Search criteria in format ['field' => 'value'].
+     * @param array|null $orderBy Ordering criteria ['field' => 'ASC|DESC'].
+     * @return object|null The first object that meets the criteria or null if
+     * it doesn't exist.
      */
     public function findOneBy(array $criteria, ?array $orderBy = null): ?object;
 
     /**
-     * Retorna el número total de objetos en el repositorio.
+     * Returns the total number of objects in the repository.
      *
-     * @param array $criteria Criterios al contar en formato ['campo' => 'valor'].
-     * @return int Cantidad de objetos.
+     * @param array $criteria Criteria when counting in format ['field' => 'value'].
+     * @return int Number of objects.
      */
     public function count(array $criteria = []): int;
 
     /**
-     * Aplica un criterio para filtrar entidades almacenadas.
+     * Applies a criterion to filter stored entities.
      *
-     * Este método permite filtrar y ordenar las entidades en el almacenamiento
-     * de acuerdo a las condiciones definidas en un objeto `Criteria`.
+     * This method allows filtering and ordering entities in storage according
+     * to conditions defined in a `Criteria` object.
      *
-     * El resultado es un arrelgo que contiene únicamente las entidades que
-     * cumplen con las condiciones.
+     * The result is an array containing only entities that meet the conditions.
      *
-     * @param Criteria $criteria El objeto `Criteria` que define las
-     * condiciones, el orden y los límites de los resultados.
-     * @return array Un arreglo con las entidades que cumplen el criterio.
+     * @param Criteria $criteria The `Criteria` object that defines the
+     * conditions, order and limits of the results.
+     * @return array An array with entities that meet the criterion.
      * @see \Doctrine\Common\Collections\Criteria
      * @see \Doctrine\Common\Collections\ArrayCollection
      */
     public function findByCriteria(Criteria $criteria): array;
 
     /**
-     * Entrega el nombre de la clase que el repositorio gestiona.
+     * Returns the name of the class that the repository manages.
      *
      * @return string
      */

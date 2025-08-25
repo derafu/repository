@@ -15,19 +15,19 @@ namespace Derafu\Repository\Contract;
 use Stringable;
 
 /**
- * Interfaz para las entidades de repositorios.
+ * Interface for repository entities.
  */
 interface EntityInterface extends Stringable
 {
     /**
-     * Entrega las propiedades de la entidad como un arreglo.
+     * Returns entity properties as an array.
      *
      * @return array
      */
     public function toArray(): array;
 
     /**
-     * Asignar un atributo a la entidad.
+     * Assign an attribute to the entity.
      *
      * @param string $name
      * @param mixed $value
@@ -36,7 +36,7 @@ interface EntityInterface extends Stringable
     public function setAttribute(string $name, mixed $value): static;
 
     /**
-     * Obtener un atributo de la entidad.
+     * Get an attribute from the entity.
      *
      * @param string $name
      * @return mixed
@@ -44,14 +44,14 @@ interface EntityInterface extends Stringable
     public function getAttribute(string $name): mixed;
 
     /**
-     * Permite saber si existe o no un atributo definido para la entidad.
+     * Allows knowing if an attribute is defined or not for the entity.
      *
      * @return bool
      */
     public function hasAttribute(string $name): bool;
 
     /**
-     * Permite desasignar el valor de un atributo de la entidad.
+     * Allows unassigning the value of an entity attribute.
      *
      * @param string $name
      * @return void

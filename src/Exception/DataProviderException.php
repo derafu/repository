@@ -15,7 +15,7 @@ namespace Derafu\Repository\Exception;
 use Derafu\Translation\Exception\Core\TranslatableLogicException;
 
 /**
- * Excepción personalizada para proveedores de datos.
+ * Custom exception for data providers.
  */
 class DataProviderException extends TranslatableLogicException
 {

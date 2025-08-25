@@ -10,11 +10,11 @@ declare(strict_types=1);
  * See LICENSE file for more details.
  */
 
-namespace Derafu\Repository\Worker;
+namespace Derafu\Repository\Service;
 
 use Derafu\Config\Trait\ConfigurableTrait;
 use Derafu\Repository\Contract\DataProviderInterface;
-use Derafu\Repository\Contract\ManagerInterface;
+use Derafu\Repository\Contract\RepositoryManagerInterface;
 use Derafu\Repository\Contract\RepositoryInterface;
 use Derafu\Repository\Entity;
 use Derafu\Repository\Exception\ManagerException;
@@ -24,49 +24,49 @@ use Exception;
 use ReflectionClass;
 
 /**
- * Servicio de administración de repositorios.
+ * Repository management service.
  */
-class ManagerWorker implements ManagerInterface
+class RepositoryManager implements RepositoryManagerInterface
 {
     use ConfigurableTrait;
 
     /**
-     * Sufijo de la interfaz.
+     * Interface suffix.
      *
      * @var string
      */
     private const ENTITY_INTERFACE_SUFFIX = 'Interface';
 
     /**
-     * Namespace de la interfaz.
+     * Interface namespace.
      *
-     * Importante: solo el nivel inmediatamente superior.
+     * Important: only the immediately superior level.
      *
      * @var string
      */
     private const ENTITY_INTERFACE_NAMESPACE = 'Contract';
 
     /**
-     * Sufijo de la clase de entidad.
+     * Entity class suffix.
      *
-     * Importante: no se utilizan sufijos en entidades, pero se deja
-     * estandrizado acá en la constante.
+     * Important: no suffixes are used in entities, but it's standardized here
+     * in the constant.
      *
      * @var string
      */
-    private const ENTITY_CLASS_SUFFIX = ''; // En blanco a propósito.
+    private const ENTITY_CLASS_SUFFIX = ''; // Empty on purpose.
 
     /**
-     * Namespace de la entidad.
+     * Entity namespace.
      *
-     * Importante: solo el nivel inmediatamente superior.
+     * Important: only the immediately superior level.
      *
      * @var string
      */
     private const ENTITY_CLASS_NAMESPACE = 'Entity';
 
     /**
-     * Esquema de configuración del worker.
+     * Worker configuration schema.
      *
      * @var array
      */
@@ -82,15 +82,15 @@ class ManagerWorker implements ManagerInterface
     ];
 
     /**
-     * Listado de repositorios que ya han sido cargados desde sus orígenes de
-     * datos.
+     * List of repositories that have already been loaded from their data
+     * sources.
      *
      * @var array<string,RepositoryInterface>
      */
     private array $loaded = [];
 
     /**
-     * Constructor del worker.
+     * Worker constructor.
      *
      * @param DataProviderInterface $dataProvider
      */
@@ -104,7 +104,7 @@ class ManagerWorker implements ManagerInterface
      */
     public function getRepository(string $repository): RepositoryInterface
     {
-        // Si el repositorio no está cargado se carga.
+        // If the repository is not loaded it's loaded.
         if (!isset($this->loaded[$repository])) {
             try {
                 $this->loaded[$repository] = $this->loadRepository($repository);
@@ -113,100 +113,98 @@ class ManagerWorker implements ManagerInterface
             }
         }
 
-        // Retornar el repositorio solicitado.
+        // Return the requested repository.
         return $this->loaded[$repository];
     }
 
     /**
-     * Carga un repositorio con los datos desde un origen de datos.
+     * Loads a repository with data from a data source.
      *
      * @param string $repository
      * @return RepositoryInterface
      */
     private function loadRepository(string $repository): RepositoryInterface
     {
-        // Resolver el repositorio que se debe crear.
+        // Resolve the repository that should be created.
         $entityClass = $this->resolveEntityClass($repository);
         $repositoryClass = $this->resolveRepositoryClass($entityClass);
 
-        // Si el repositorio implementa RepositoryInterface es un repositorio
-        // con datos que se obtienen desde DatasourceProvider y se deben cargar
-        // al repositorio (en memoria).
+        // If the repository implements RepositoryInterface it's a repository
+        // with data that is obtained from DatasourceProvider and must be loaded
+        // to the repository (in memory).
         if (in_array(RepositoryInterface::class, class_implements($repositoryClass))) {
             $data = $this->dataProvider->fetch($repository);
             $instance = new $repositoryClass($data, $entityClass);
         }
 
-        // Si el repositorio es otro tipo de clase se instancia sin datos y se
-        // espera que el repositorio resuelva su carga (ej: desde una base de
-        // datos).
+        // If the repository is another type of class it's instantiated without
+        // data and it's expected that the repository resolves its loading (e.g.
+        // from a database).
         else {
-            // TODO: Mejorar retorno de RepositoryInterface con este caso.
+            // TODO: Improve RepositoryInterface return with this case.
             $instance = new $repositoryClass();
         }
 
-        // Asignar la instnacia del repositorio como cargada y retornar.
+        // Assign the repository instance as loaded and return.
         $this->loaded[$repository] =  $instance;
         return $this->loaded[$repository];
     }
 
     /**
-     * Determina la clase de la entidad que se debe utilizar con el repositorio.
+     * Determines the entity class that should be used with the repository.
      *
-     * El identificador del repositorio puede ser el FQCN de la clase de la
-     * entidad (lo ideal) o un identificador genérico que se resolverá a la
-     * clase de entidad configurada en el worker.
+     * The repository identifier can be the FQCN of the entity class (ideal) or
+     * a generic identifier that will be resolved to the entity class configured
+     * in the worker.
      *
-     * Si el identificador del repositorio es una interfaz se espera:
+     * If the repository identifier is an interface it's expected:
      *
-     *   - La interfaz esté dentro de un namespace "Contract".
-     *   - La interfaz tenga como sufijo "Interface".
-     *   - La entidad esté dentro del namespace "Entity" sin sufijo.
+     *   - The interface is within a "Contract" namespace.
+     *   - The interface has "Interface" as suffix.
+     *   - The entity is within the "Entity" namespace without suffix.
      *
-     * @param string $repository Identificador del repositorio.
-     * @return string Clase de la entidad para el repositorio.
+     * @param string $repository Repository identifier.
+     * @return string Entity class for the repository.
      */
     private function resolveEntityClass(string $repository): string
     {
-        // Si el identificador del repositorio "parece" clase se asume que es la
-        // clase de la entidad o una interfaz de la entidad en el mismo
-        // namespace.
+        // If the repository identifier "looks like" a class it's assumed to be
+        // the entity class or an entity interface in the same namespace.
         if (str_contains($repository, '\\')) {
             $entityClass = $this->guessEntityClass($repository);
         }
 
-        // Se entrega la clase de la entidad por defecto cuando el identificador
-        // no es una clase. Si no tiene "\" entonces no tiene namespace, en este
-        // caso se asume no es una clase.
+        // The default entity class is returned when the identifier is not a
+        // class. If it doesn't have "\" then it doesn't have a namespace, in
+        // this case it's assumed it's not a class.
         else {
             $entityClass = $this->getConfiguration()->get('entityClass');
         }
 
-        // Lanzar error si la clase no existe pues podría haber sido mal
-        // escrita por el programador.
+        // Throw error if the class doesn't exist as it might have been
+        // misspelled by the programmer.
         if (!class_exists($entityClass)) {
             throw new ManagerException(sprintf(
-                'La clase de entidad %s no existe. ¿Estará mal escrita?',
+                'Entity class %s does not exist. Could it be misspelled?',
                 $entityClass
             ));
         }
 
-        // Entregar la clase de la entidad.
+        // Return the entity class.
         return $entityClass;
     }
 
     /**
-     * Adivina la clase de entidad en caso que la clase de entrada sea una
-     * interfaz.
+     * Guesses the entity class in case the input class is an interface.
      *
      * @param string $class
      * @return string
      */
     private function guessEntityClass(string $class): string
     {
-        // Si la clase es una interfaz se asume una clase de entidad en el mismo
-        // namespace. Esto es rígido y requiere un formato para el FQCN de la
-        // clase y la interfaz. Por ahora es suficiente.
+        // If the class is an interface it's assumed to be an entity class in
+        // the same namespace. This is rigid and requires a format for the class
+        // and interface FQCN. For now it's sufficient.
         if (str_ends_with($class, self::ENTITY_INTERFACE_SUFFIX)) {
             $length = strlen($class) - strlen(self::ENTITY_INTERFACE_SUFFIX);
             return str_replace(
@@ -216,24 +214,25 @@ class ManagerWorker implements ManagerInterface
             ) . self::ENTITY_CLASS_SUFFIX;
         }
 
-        // Se entrega la misma clase, pues no tiene el formato esperado para
-        // adiviar la clase de entidad.
+        // Return the same class, as it doesn't have the expected format to
+        // guess the entity class.
         return $class;
     }
 
     /**
-     * Determina la clase del repositorio que se debe utilizar para una entidad.
+     * Determines the repository class that should be used for an entity.
      *
-     * Si la clase de la entidad no provee la información de su repositorio
-     * asociado se entregará la clase de repositorio configurada en el worker.
+     * If the entity class doesn't provide information about its associated
+     * repository, the repository class configured in the worker will be
+     * returned.
      *
-     * @param string $entityClass Clase de la entidad.
-     * @return string Clase del repositorio.
+     * @param string $entityClass Entity class.
+     * @return string Repository class.
      */
     private function resolveRepositoryClass(string $entityClass): string
     {
-        // Se trata de obtener la clase del repositorio desde el método estático
-        // de la entidad getRepositoryClass().
+        // Try to get the repository class from the entity's static method
+        // getRepositoryClass().
         if (method_exists($entityClass, 'getRepositoryClass')) {
             $repositoryClass = call_user_func([$entityClass, 'getRepositoryClass']);
             if ($repositoryClass) {
@@ -241,8 +240,8 @@ class ManagerWorker implements ManagerInterface
             }
         }
 
-        // Se trata de obtener la clase del repositorio desde un atributo PHP de
-        // la clase de la entidad.
+        // Try to get the repository class from a PHP attribute of the entity
+        // class.
         $reflectionClass = new ReflectionClass($entityClass);
         $attributes = $reflectionClass->getAttributes(DEM\Entity::class);
         if (!empty($attributes)) {
@@ -252,19 +251,19 @@ class ManagerWorker implements ManagerInterface
             }
         }
 
-        // Se entrega la clase del repositorio por defecto configurada.
+        // Return the default repository class configured.
         $repositoryClass = $this->getConfiguration()->get('repositoryClass');
 
-        // Lanzar error si la clase no existe pues podría haber sido mal
-        // escrita por el programador.
+        // Throw error if the class doesn't exist as it might have been
+        // misspelled by the programmer.
         if (!class_exists($repositoryClass)) {
             throw new ManagerException(sprintf(
-                'La clase de repositorio %s no existe. ¿Estará mal escrita?',
+                'Repository class %s does not exist. Could it be misspelled?',
                 $repositoryClass
             ));
         }
 
-        // Entregar clase del repositorio.
+        // Return repository class.
         return $repositoryClass;
     }
 }

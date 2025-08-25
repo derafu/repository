@@ -15,7 +15,7 @@ namespace Derafu\Repository\Exception;
 use Derafu\Translation\Exception\Core\TranslatableException;
 
 /**
- * Excepción general para las entidades.
+ * General exception for entities.
  */
 class EntityException extends TranslatableException
 {

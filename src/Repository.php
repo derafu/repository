@@ -23,29 +23,29 @@ use InvalidArgumentException;
 use stdClass;
 
 /**
- * Clase para repositorios de objetos/entidades.
+ * Class for object/entity repositories.
  *
- * Proporciona métodos estándar para acceder y buscar objetos/entidades desde
- * una fuente de datos.
+ * Provides standard methods to access and search objects/entities from a data
+ * source.
  */
 class Repository extends AbstractContainer implements RepositoryInterface
 {
     /**
-     * Clase de la entidad donde se colocarán los datos que se obtengan a través
-     * del repositorio.
+     * Entity class where data obtained through the repository will be placed.
      *
      * @var string
      */
     protected string $entityClass = stdClass::class;
 
     /**
-     * Constructor del repositorio.
+     * Repository constructor.
      *
-     * @param string|array|ArrayAccess|ArrayObject $source Arreglo de datos o
-     * ruta al archivo PHP.
-     * @param string|null $entityClass Clase de la entidad asociada al repositorio.
-     * @param string|null $idAttribute Nombre del atributo ID que se debe
-     * asegurar que exista en los elementos cargados del repositorio.
+     * @param string|array|ArrayAccess|ArrayObject $source Data array or PHP
+     * file path.
+     * @param string|null $entityClass Entity class associated with the
+     * repository.
+     * @param string|null $idAttribute Name of the ID attribute that must be
+     * ensured to exist in elements loaded from the repository.
      */
     public function __construct(
         string|array|ArrayAccess|ArrayObject $source,
@@ -60,7 +60,7 @@ class Repository extends AbstractContainer implements RepositoryInterface
     }
 
     /**
-     * Carga los datos del repositorio.
+     * Loads repository data.
      *
      * @param string|array|ArrayAccess|ArrayObject $source
      * @param string|null $idAttribute
@@ -87,7 +87,7 @@ class Repository extends AbstractContainer implements RepositoryInterface
     {
         if (!is_string($id) && !is_int($id)) {
             throw new InvalidArgumentException(sprintf(
-                'En el método %s:find($id) se pasó un $id de tipo %s y solo se permiten string e int.',
+                'In method %s:find($id) an $id of type %s was passed and only string and int are allowed.',
                 static::class,
                 get_debug_type($id)
             ));
@@ -129,11 +129,11 @@ class Repository extends AbstractContainer implements RepositoryInterface
         if ($offset !== null || $limit !== null) {
             $offset = $offset ?: 0;
             if ($offset < 0) {
-                throw new InvalidArgumentException('Offset no puede ser negativo.');
+                throw new InvalidArgumentException('Offset cannot be negative.');
             }
 
             if ($limit !== null && $limit < 0) {
-                throw new InvalidArgumentException('Limit no puede ser negativo.');
+                throw new InvalidArgumentException('Limit cannot be negative.');
             }
 
             $results = array_slice($results, $offset, $limit);
@@ -190,7 +190,7 @@ class Repository extends AbstractContainer implements RepositoryInterface
     }
 
     /**
-     * Verifica si un item cumple con los criterios de búsqueda.
+     * Checks if an item meets the search criteria.
      */
     protected function matchCriteria(array $item, array $criteria): bool
     {
@@ -207,11 +207,11 @@ class Repository extends AbstractContainer implements RepositoryInterface
     }
 
     /**
-     * Ordena los resultados según los criterios especificados.
+     * Orders results according to specified criteria.
      *
-     * @param array $results Resultados a ordenar.
-     * @param array $orderBy Criterios de ordenamiento ['campo' => 'ASC|DESC'].
-     * @return array Resultados ordenados.
+     * @param array $results Results to order.
+     * @param array $orderBy Ordering criteria ['field' => 'ASC|DESC'].
+     * @return array Ordered results.
      */
     protected function applyOrderBy(array $results, array $orderBy): array
     {
@@ -236,10 +236,10 @@ class Repository extends AbstractContainer implements RepositoryInterface
     }
 
     /**
-     * Crea una entidad a partir de los datos.
+     * Creates an entity from data.
      *
-     * @param array $data Datos que se asignarán a la entidad.
-     * @return object Instancia de la entidad con los datos cargados.
+     * @param array $data Data that will be assigned to the entity.
+     * @return object Entity instance with loaded data.
      */
     protected function createEntity(array $data): object
     {

@@ -17,17 +17,17 @@ use Derafu\Config\Contract\ConfigurableInterface;
 use Derafu\Repository\Exception\DataProviderException;
 
 /**
- * Interfaz para el proveedor de datos del repositorio.
+ * Interface for repository data provider.
  */
 interface DataProviderInterface extends ConfigurableInterface
 {
     /**
-     * Busca y entrega los datos en un origen de datos.
+     * Searches and returns data from a data source.
      *
-     * Los datos se entregan como un ArrayObject para ser compartidos entre los
-     * diferentes consumidores de datos que podrían requerir el mismo origen.
+     * Data is returned as an ArrayObject to be shared between different data
+     * consumers that might require the same source.
      *
-     * @param string $source Identificador del origen solicitado.
+     * @param string $source Identifier of the requested source.
      * @return ArrayObject
      * @throws DataProviderException
      */

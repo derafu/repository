@@ -16,16 +16,16 @@ use Derafu\Config\Contract\ConfigurableInterface;
 use Derafu\Repository\Exception\ManagerException;
 
 /**
- * Interfaz para el administrador de entidades.
+ * Interface for entity manager.
  */
-interface ManagerInterface extends ConfigurableInterface
+interface RepositoryManagerInterface extends ConfigurableInterface
 {
     /**
-     * Entrega el repositorio asociado a una clase de entidad o identificador
-     * del repositorio.
+     * Returns the repository associated with an entity class or repository
+     * identifier.
      *
-     * @param string $repository Clase de entidad o identificador repositorio.
-     * @return RepositoryInterface Repositorio solicitado.
+     * @param string $repository Entity class or repository identifier.
+     * @return RepositoryInterface Requested repository.
      * @throws ManagerException
      */
     public function getRepository(string $repository): RepositoryInterface;

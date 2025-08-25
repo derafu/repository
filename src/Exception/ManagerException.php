@@ -15,7 +15,7 @@ namespace Derafu\Repository\Exception;
 use Derafu\Translation\Exception\Core\TranslatableLogicException;
 
 /**
- * Excepción personalizada para el administrador de los repostiorios.
+ * Custom exception for repository manager.
  */
 class ManagerException extends TranslatableLogicException
 {
