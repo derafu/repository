@@ -14,8 +14,8 @@ namespace Derafu\Repository\Service;
 
 use Derafu\Config\Trait\ConfigurableTrait;
 use Derafu\Repository\Contract\DataProviderInterface;
-use Derafu\Repository\Contract\RepositoryManagerInterface;
 use Derafu\Repository\Contract\RepositoryInterface;
+use Derafu\Repository\Contract\RepositoryManagerInterface;
 use Derafu\Repository\Entity;
 use Derafu\Repository\Exception\ManagerException;
 use Derafu\Repository\Mapping as DEM;
