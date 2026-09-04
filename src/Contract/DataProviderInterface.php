@@ -32,4 +32,14 @@ interface DataProviderInterface extends ConfigurableInterface
      * @throws DataProviderException
      */
     public function fetch(string $source): ArrayObject;
+
+    /**
+     * Returns the identifiers of every data source that is configured.
+     *
+     * This does not fetch or load any data, it only lists the identifiers
+     * that can be passed to fetch().
+     *
+     * @return string[]
+     */
+    public function getSources(): array;
 }

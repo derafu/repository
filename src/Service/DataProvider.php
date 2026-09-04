@@ -102,6 +102,14 @@ class DataProvider implements DataProviderInterface
     /**
      * {@inheritDoc}
      */
+    public function getSources(): array
+    {
+        return array_keys($this->sources);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function fetch(string $source): ArrayObject
     {
         // If the source is not loaded it's loaded.

@@ -74,8 +74,8 @@ class Repository extends AbstractContainer implements RepositoryInterface
         if (!is_array($data)) {
             $data = $this->createFrom($data)->toArray();
         }
-        if ($idAttribute && is_array($data)) {
-            $data = Arr::ensureIdInElements($source, $idAttribute);
+        if ($idAttribute) {
+            $data = Arr::ensureIdInElements($data, $idAttribute);
         }
         $this->data = $this->createFrom($data);
     }

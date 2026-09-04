@@ -232,6 +232,70 @@ class RepositoryManagerTest extends TestCase
     }
 
     /**
+     * Test that the data provider lists the identifiers of its configured
+     * sources without loading any of them.
+     */
+    public function testDataProviderGetSources(): void
+    {
+        $sources = [
+            'products' => 'products',
+            'users' => 'users',
+        ];
+
+        $dataProvider = $this->createDataProvider($sources);
+
+        $this->assertSame(['products', 'users'], $dataProvider->getSources());
+    }
+
+    /**
+     * Test that a data provider with no configured sources lists none.
+     */
+    public function testDataProviderGetSourcesWhenEmpty(): void
+    {
+        $dataProvider = $this->createDataProvider([]);
+
+        $this->assertSame([], $dataProvider->getSources());
+    }
+
+    /**
+     * Test that the repository manager lists the identifiers of every
+     * repository available through its data provider.
+     */
+    public function testGetAvailableRepositories(): void
+    {
+        $sources = [
+            'products' => 'products',
+            'users' => 'users',
+        ];
+
+        $dataProvider = $this->createDataProvider($sources);
+        $manager = new RepositoryManager($dataProvider);
+
+        $this->assertSame(
+            ['products', 'users'],
+            $manager->getAvailableRepositories()
+        );
+    }
+
+    /**
+     * Test that listing available repositories does not require any of them
+     * to have been loaded first.
+     */
+    public function testGetAvailableRepositoriesDoesNotLoadRepositories(): void
+    {
+        $sources = [
+            'products' => 'products',
+        ];
+
+        $dataProvider = $this->createDataProvider($sources);
+        $manager = new RepositoryManager($dataProvider);
+
+        // No se llamó getRepository() antes, y aun así debe listar el
+        // identificador configurado.
+        $this->assertSame(['products'], $manager->getAvailableRepositories());
+    }
+
+    /**
      * Test repository manager with repository operations.
      */
     public function testRepositoryOperations(): void

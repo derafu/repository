@@ -118,6 +118,14 @@ class RepositoryManager implements RepositoryManagerInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function getAvailableRepositories(): array
+    {
+        return $this->dataProvider->getSources();
+    }
+
+    /**
      * Loads a repository with data from a data source.
      *
      * @param string $repository

@@ -29,4 +29,15 @@ interface RepositoryManagerInterface extends ConfigurableInterface
      * @throws ManagerException
      */
     public function getRepository(string $repository): RepositoryInterface;
+
+    /**
+     * Returns the identifiers of every repository that can be requested with
+     * getRepository().
+     *
+     * This does not load any repository, it only lists the identifiers that
+     * are available.
+     *
+     * @return string[]
+     */
+    public function getAvailableRepositories(): array;
 }

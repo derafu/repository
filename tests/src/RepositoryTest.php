@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\TestsRepository;
 
+use ArrayObject;
 use Derafu\Repository\Repository;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -110,5 +111,49 @@ class RepositoryTest extends TestCase
 
         $this->assertNotNull($foundItem);
         $this->assertSame(42, $foundItem->name);
+    }
+
+    /**
+     * Prueba de repositorio con datos provenientes de un archivo PHP y con
+     * idAttribute definido.
+     */
+    public function testRepositoryFromFileWithIdAttribute(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'repository') . '.php';
+        file_put_contents($file, '<?php return [' . var_export(['name' => 'a'], true) . ', ' . var_export(['name' => 'b'], true) . '];');
+
+        try {
+            $repository = new Repository($file, idAttribute: 'id');
+
+            $this->assertSame(2, $repository->count());
+
+            $foundItem = $repository->find(0);
+
+            $this->assertNotNull($foundItem);
+            $this->assertSame('a', $foundItem->name);
+        } finally {
+            unlink($file);
+        }
+    }
+
+    /**
+     * Prueba de repositorio con datos provenientes de un ArrayObject y con
+     * idAttribute definido.
+     */
+    public function testRepositoryFromArrayObjectWithIdAttribute(): void
+    {
+        $data = new ArrayObject([
+            ['name' => 'a'],
+            ['name' => 'b'],
+        ]);
+
+        $repository = new Repository($data, idAttribute: 'id');
+
+        $this->assertSame(2, $repository->count());
+
+        $foundItem = $repository->find(0);
+
+        $this->assertNotNull($foundItem);
+        $this->assertSame('a', $foundItem->name);
     }
 }
