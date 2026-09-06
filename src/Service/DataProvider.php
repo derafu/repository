@@ -15,10 +15,12 @@ namespace Derafu\Repository\Service;
 use ArrayObject;
 use Derafu\Config\Trait\ConfigurableTrait;
 use Derafu\Repository\Contract\DataProviderInterface;
+use Derafu\Repository\Contract\DataSourceInterface;
 use Derafu\Repository\Exception\DataProviderException;
+use Derafu\Repository\Service\DataSource\FileDataSource;
+use Derafu\Repository\Service\DataSource\FileFormat\FileFormatReaderRegistry;
 use Derafu\Support\Arr;
 use Psr\SimpleCache\CacheInterface;
-use Symfony\Component\Yaml\Yaml;
 
 /**
  * Data provider.
@@ -62,7 +64,11 @@ class DataProvider implements DataProviderInterface
      *
      * The same source (value) can be in different entities (index).
      *
-     * @var array<string, string>
+     * A source can be provided either as a file path (string), resolved
+     * through FileDataSource, or as a DataSourceInterface instance for any
+     * other kind of origin (e.g. a PDO connection or an enum).
+     *
+     * @var array<string, string|DataSourceInterface>
      */
     private array $sources;
 
@@ -74,6 +80,13 @@ class DataProvider implements DataProviderInterface
     private ?CacheInterface $cache;
 
     /**
+     * Registry used to resolve the file format reader of string sources.
+     *
+     * @var FileFormatReaderRegistry
+     */
+    private FileFormatReaderRegistry $fileFormatReaders;
+
+    /**
      * In-memory data sources that have already had their data loaded.
      *
      * @var array<string,ArrayObject>
@@ -83,17 +96,23 @@ class DataProvider implements DataProviderInterface
     /**
      * Worker constructor.
      *
-     * @param array<string,string> $sources Data sources (ID and source).
+     * @param array<string,string|DataSourceInterface> $sources Data sources
+     * (ID and source).
      * @param CacheInterface|null $cache Cache instance.
      * @param array $config Configuration.
+     * @param FileFormatReaderRegistry|null $fileFormatReaders Registry used
+     * to resolve the file format reader of string sources. When `null`, a
+     * registry with the built-in readers (PHP, JSON, YAML) is used.
      */
     public function __construct(
         array $sources = [],
         ?CacheInterface $cache = null,
-        array $config = []
+        array $config = [],
+        ?FileFormatReaderRegistry $fileFormatReaders = null
     ) {
         $this->sources = $sources;
         $this->cache = $cache;
+        $this->fileFormatReaders = $fileFormatReaders ?? new FileFormatReaderRegistry();
         if (!empty($config)) {
             $this->setConfiguration($config);
         }
@@ -153,8 +172,8 @@ class DataProvider implements DataProviderInterface
             ));
         }
 
-        // Load source data from a file.
-        $data = $this->fetchDataFromFileSource($source);
+        // Load source data through its data source.
+        $data = $this->resolveDataSource($this->sources[$source])->read();
 
         // Save data in cache.
         if (isset($this->cache)) {
@@ -184,65 +203,21 @@ class DataProvider implements DataProviderInterface
     }
 
     /**
-     * Loads source data from a file.
+     * Resolves the data source instance that must be used to read a source.
      *
-     * The file can be: .php, .json or .yaml
+     * A string source is resolved as a file path through FileDataSource. Any
+     * other source must already be a DataSourceInterface instance.
      *
-     * @param string $source
-     * @return array
+     * @param string|DataSourceInterface $source
+     * @return DataSourceInterface
      */
-    private function fetchDataFromFileSource(string $source): array
+    private function resolveDataSource(string|DataSourceInterface $source): DataSourceInterface
     {
-        $filepath = $this->sources[$source];
-
-        $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
-
-        switch ($extension) {
-            case 'php':
-                $data = require $filepath;
-                break;
-            case 'json':
-                $data = json_decode(file_get_contents($filepath), true);
-                break;
-            case 'yaml':
-                $data = Yaml::parseFile(file_get_contents($filepath));
-                break;
-            default:
-                $data = $this->handleExtension($source, $filepath, $extension);
+        if ($source instanceof DataSourceInterface) {
+            return $source;
         }
 
-        if (!is_array($data)) {
-            throw new DataProviderException(sprintf(
-                'Data from source %s is not valid to be used as a data source. Path: %s.',
-                $source,
-                $filepath
-            ));
-        }
-
-        return $data;
-    }
-
-    /**
-     * Handles the case when a file extension is not supported.
-     *
-     * Works as a "hook" to customize behavior through inheritance.
-     *
-     * @param string $source
-     * @param string $filepath
-     * @param string $extension
-     * @return array
-     */
-    protected function handleExtension(
-        string $source,
-        string $filepath,
-        string $extension
-    ): array {
-        throw new DataProviderException(sprintf(
-            'File format %s from data source %s is not supported. Path: %s.',
-            $extension,
-            $source,
-            $filepath
-        ));
+        return new FileDataSource($source, $this->fileFormatReaders);
     }
 
     /**
