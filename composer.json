@@ -1,6 +1,6 @@
 {
     "name": "derafu/repository",
-    "description": "Derafu: Repository - Lightweight File Data Source Management for PHP",
+    "description": "Derafu: Repository - Lightweight Data Source Management for PHP",
     "type": "library",
     "homepage": "https://www.derafu.dev/docs/data/repository",
     "license": "MIT",
