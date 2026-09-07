@@ -14,13 +14,16 @@ namespace Derafu\Repository;
 
 use ArrayAccess;
 use ArrayObject;
+use BackedEnum;
 use Derafu\Container\Abstract\AbstractContainer;
 use Derafu\Repository\Contract\RepositoryInterface;
+use Derafu\Repository\Exception\EntityException;
 use Derafu\Support\Arr;
 use Derafu\Support\Factory;
 use Doctrine\Common\Collections\Criteria;
 use InvalidArgumentException;
 use stdClass;
+use Throwable;
 
 /**
  * Class for object/entity repositories.
@@ -50,32 +53,30 @@ class Repository extends AbstractContainer implements RepositoryInterface
     public function __construct(
         string|array|ArrayAccess|ArrayObject $source,
         ?string $entityClass = null,
-        ?string $idAttribute = null
+        private ?string $idAttribute = null
     ) {
         if ($entityClass !== null) {
             $this->entityClass = $entityClass;
         }
 
-        $this->load($source, $idAttribute);
+        $this->load($source);
     }
 
     /**
      * Loads repository data.
      *
      * @param string|array|ArrayAccess|ArrayObject $source
-     * @param string|null $idAttribute
      * @return void
      */
     protected function load(
         string|array|ArrayAccess|ArrayObject $source,
-        ?string $idAttribute = null
     ): void {
         $data = is_string($source) ? require $source : $source;
         if (!is_array($data)) {
             $data = $this->createFrom($data)->toArray();
         }
-        if ($idAttribute) {
-            $data = Arr::ensureIdInElements($data, $idAttribute);
+        if ($this->idAttribute) {
+            $data = Arr::ensureIdInElements($data, $this->idAttribute);
         }
         $this->data = $this->createFrom($data);
     }
@@ -238,11 +239,35 @@ class Repository extends AbstractContainer implements RepositoryInterface
     /**
      * Creates an entity from data.
      *
+     * If the entity class is a (backed) enum, the case is resolved from the
+     * id attribute instead of being hydrated, as enums cannot be instantiated
+     * with `new`.
+     *
      * @param array $data Data that will be assigned to the entity.
      * @return object Entity instance with loaded data.
+     * @throws EntityException If an enum entity cannot be resolved.
      */
     protected function createEntity(array $data): object
     {
+        if (is_a($this->entityClass, BackedEnum::class, true)) {
+            try {
+                return ($this->entityClass)::from($data[$this->idAttribute ?? ''] ?? null);
+            } catch (Throwable $e) {
+                throw new EntityException(sprintf(
+                    'Could not create enum entity %s: %s',
+                    $this->entityClass,
+                    $e->getMessage()
+                ));
+            }
+        }
+
+        if (enum_exists($this->entityClass)) {
+            throw new EntityException(sprintf(
+                '%s must be a backed enum to be used as a repository entity.',
+                $this->entityClass
+            ));
+        }
+
         return Factory::create($data, $this->entityClass);
     }
 }

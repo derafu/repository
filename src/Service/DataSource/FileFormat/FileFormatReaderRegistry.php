@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Repository\Service\DataSource\FileFormat;
 
 use Derafu\Repository\Contract\FileFormatReaderInterface;
+use Derafu\Repository\Contract\FileFormatReaderRegistryInterface;
 use Derafu\Repository\Exception\DataProviderException;
 
 /**
@@ -22,7 +23,7 @@ use Derafu\Repository\Exception\DataProviderException;
  * formats can be supported by registering additional readers, without
  * modifying this class or any of the built-in readers.
  */
-final class FileFormatReaderRegistry
+final class FileFormatReaderRegistry implements FileFormatReaderRegistryInterface
 {
     /**
      * Registered readers.

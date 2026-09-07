@@ -17,7 +17,9 @@ use Derafu\Repository\Contract\DataSourceInterface;
 use Derafu\Repository\Contract\FileFormatReaderInterface;
 use Derafu\Repository\Exception\DataProviderException;
 use Derafu\Repository\Service\DataProvider;
+use Derafu\Repository\Service\DataSource\DataSourceResolverRegistry;
 use Derafu\Repository\Service\DataSource\FileDataSource;
+use Derafu\Repository\Service\DataSource\FileDataSourceResolver;
 use Derafu\Repository\Service\DataSource\FileFormat\FileFormatReaderRegistry;
 use Derafu\Repository\Service\DataSource\FileFormat\JsonFileFormatReader;
 use Derafu\Repository\Service\DataSource\FileFormat\PhpFileFormatReader;
@@ -32,6 +34,8 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(JsonFileFormatReader::class)]
 #[CoversClass(YamlFileFormatReader::class)]
 #[CoversClass(DataProvider::class)]
+#[CoversClass(DataSourceResolverRegistry::class)]
+#[CoversClass(FileDataSourceResolver::class)]
 class DataSourceTest extends TestCase
 {
     private const EXPECTED_DATA = [

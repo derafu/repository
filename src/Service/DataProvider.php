@@ -16,9 +16,9 @@ use ArrayObject;
 use Derafu\Config\Trait\ConfigurableTrait;
 use Derafu\Repository\Contract\DataProviderInterface;
 use Derafu\Repository\Contract\DataSourceInterface;
+use Derafu\Repository\Contract\DataSourceResolverRegistryInterface;
 use Derafu\Repository\Exception\DataProviderException;
-use Derafu\Repository\Service\DataSource\FileDataSource;
-use Derafu\Repository\Service\DataSource\FileFormat\FileFormatReaderRegistry;
+use Derafu\Repository\Service\DataSource\DataSourceResolverRegistry;
 use Derafu\Support\Arr;
 use Psr\SimpleCache\CacheInterface;
 
@@ -64,9 +64,10 @@ class DataProvider implements DataProviderInterface
      *
      * The same source (value) can be in different entities (index).
      *
-     * A source can be provided either as a file path (string), resolved
-     * through FileDataSource, or as a DataSourceInterface instance for any
-     * other kind of origin (e.g. a PDO connection or an enum).
+     * A source can be provided either as a raw string, resolved through the
+     * source resolver registry (a file path or a scheme-prefixed string like
+     * `enum:App\Enum\Status`), or as a DataSourceInterface instance for any
+     * other kind of origin (e.g. a PDO connection).
      *
      * @var array<string, string|DataSourceInterface>
      */
@@ -80,11 +81,11 @@ class DataProvider implements DataProviderInterface
     private ?CacheInterface $cache;
 
     /**
-     * Registry used to resolve the file format reader of string sources.
+     * Registry used to resolve the data source of string sources.
      *
-     * @var FileFormatReaderRegistry
+     * @var DataSourceResolverRegistryInterface
      */
-    private FileFormatReaderRegistry $fileFormatReaders;
+    private DataSourceResolverRegistryInterface $sourceResolvers;
 
     /**
      * In-memory data sources that have already had their data loaded.
@@ -100,19 +101,20 @@ class DataProvider implements DataProviderInterface
      * (ID and source).
      * @param CacheInterface|null $cache Cache instance.
      * @param array $config Configuration.
-     * @param FileFormatReaderRegistry|null $fileFormatReaders Registry used
-     * to resolve the file format reader of string sources. When `null`, a
-     * registry with the built-in readers (PHP, JSON, YAML) is used.
+     * @param DataSourceResolverRegistryInterface|null $sourceResolvers
+     * Registry used to resolve the data source of string sources. When
+     * `null`, a registry with the built-in resolvers (`enum:` and file path)
+     * is used.
      */
     public function __construct(
         array $sources = [],
         ?CacheInterface $cache = null,
         array $config = [],
-        ?FileFormatReaderRegistry $fileFormatReaders = null
+        ?DataSourceResolverRegistryInterface $sourceResolvers = null
     ) {
         $this->sources = $sources;
         $this->cache = $cache;
-        $this->fileFormatReaders = $fileFormatReaders ?? new FileFormatReaderRegistry();
+        $this->sourceResolvers = $sourceResolvers ?? new DataSourceResolverRegistry();
         if (!empty($config)) {
             $this->setConfiguration($config);
         }
@@ -205,7 +207,7 @@ class DataProvider implements DataProviderInterface
     /**
      * Resolves the data source instance that must be used to read a source.
      *
-     * A string source is resolved as a file path through FileDataSource. Any
+     * A string source is resolved through the source resolver registry. Any
      * other source must already be a DataSourceInterface instance.
      *
      * @param string|DataSourceInterface $source
@@ -217,7 +219,7 @@ class DataProvider implements DataProviderInterface
             return $source;
         }
 
-        return new FileDataSource($source, $this->fileFormatReaders);
+        return $this->sourceResolvers->getResolver($source)->resolve($source);
     }
 
     /**

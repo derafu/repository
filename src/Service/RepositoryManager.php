@@ -142,7 +142,10 @@ class RepositoryManager implements RepositoryManagerInterface
         // to the repository (in memory).
         if (in_array(RepositoryInterface::class, class_implements($repositoryClass))) {
             $data = $this->dataProvider->fetch($repository);
-            $instance = new $repositoryClass($data, $entityClass);
+            $idAttribute = $this->dataProvider->getConfiguration()->get(
+                'normalization.idAttribute'
+            );
+            $instance = new $repositoryClass($data, $entityClass, $idAttribute);
         }
 
         // If the repository is another type of class it's instantiated without

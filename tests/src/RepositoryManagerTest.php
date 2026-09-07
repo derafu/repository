@@ -17,7 +17,10 @@ use Derafu\Repository\Contract\RepositoryInterface;
 use Derafu\Repository\Entity;
 use Derafu\Repository\Exception\ManagerException;
 use Derafu\Repository\Repository;
+use Derafu\Repository\Service\DataSource\DataSourceResolverRegistry;
+use Derafu\Repository\Service\DataSource\EnumDataSourceResolver;
 use Derafu\Repository\Service\DataSource\FileDataSource;
+use Derafu\Repository\Service\DataSource\FileDataSourceResolver;
 use Derafu\Repository\Service\DataSource\FileFormat\FileFormatReaderRegistry;
 use Derafu\Repository\Service\DataSource\FileFormat\PhpFileFormatReader;
 use Derafu\Repository\Service\RepositoryManager;
@@ -32,6 +35,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(FileDataSource::class)]
 #[CoversClass(FileFormatReaderRegistry::class)]
 #[CoversClass(PhpFileFormatReader::class)]
+#[CoversClass(DataSourceResolverRegistry::class)]
+#[CoversClass(EnumDataSourceResolver::class)]
+#[CoversClass(FileDataSourceResolver::class)]
 class RepositoryManagerTest extends TestCase
 {
     public static function provideTestCases(): array

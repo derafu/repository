@@ -13,14 +13,14 @@ declare(strict_types=1);
 namespace Derafu\Repository\Service\DataSource;
 
 use Derafu\Repository\Contract\DataSourceInterface;
+use Derafu\Repository\Contract\FileFormatReaderRegistryInterface;
 use Derafu\Repository\Exception\DataProviderException;
-use Derafu\Repository\Service\DataSource\FileFormat\FileFormatReaderRegistry;
 
 /**
  * Data source that reads data from a file.
  *
  * The file format (PHP, JSON, YAML, etc.) is resolved from its extension
- * through a FileFormatReaderRegistry.
+ * through a FileFormatReaderRegistryInterface.
  */
 final class FileDataSource implements DataSourceInterface
 {
@@ -28,12 +28,12 @@ final class FileDataSource implements DataSourceInterface
      * Data source constructor.
      *
      * @param string $filepath Path of the file to read.
-     * @param FileFormatReaderRegistry $readers Registry used to resolve the
-     * reader for the file format.
+     * @param FileFormatReaderRegistryInterface $readers Registry used to
+     * resolve the reader for the file format.
      */
     public function __construct(
         private readonly string $filepath,
-        private readonly FileFormatReaderRegistry $readers,
+        private readonly FileFormatReaderRegistryInterface $readers,
     ) {
     }
 
