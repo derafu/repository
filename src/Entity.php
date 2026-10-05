@@ -63,11 +63,11 @@ class Entity implements EntityInterface
     public function getAttribute(string $name): mixed
     {
         if (!$this->hasAttribute($name)) {
-            throw new EntityException(sprintf(
-                'Attribute %s does not exist in entity %s.',
-                $name,
-                static::class
-            ));
+            throw new EntityException([
+                'Attribute {attribute} does not exist in entity {entity}.',
+                'attribute' => $name,
+                'entity' => static::class,
+            ]);
         }
 
         return $this->attributes[$name];
@@ -175,11 +175,11 @@ class Entity implements EntityInterface
         }
 
         // If the method doesn't exist an exception is generated.
-        throw new EntityException(sprintf(
-            'Method %s::%s() does not exist.',
-            get_debug_type($this),
-            $name,
-        ));
+        throw new EntityException([
+            'Method {class}::{method}() does not exist.',
+            'class' => get_debug_type($this),
+            'method' => $name,
+        ]);
     }
 
     /**
@@ -192,10 +192,10 @@ class Entity implements EntityInterface
     public static function __callStatic(string $name, array $arguments)
     {
         // If the method doesn't exist an exception is generated.
-        throw new EntityException(sprintf(
-            'Method %s::%s() does not exist.',
-            static::class,
-            $name,
-        ));
+        throw new EntityException([
+            'Method {class}::{method}() does not exist.',
+            'class' => static::class,
+            'method' => $name,
+        ]);
     }
 }

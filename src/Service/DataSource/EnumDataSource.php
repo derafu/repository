@@ -65,10 +65,10 @@ final class EnumDataSource implements DataSourceInterface
     private function assertIsBackedEnum(): void
     {
         if (!enum_exists($this->enumClass) || !is_a($this->enumClass, BackedEnum::class, true)) {
-            throw new DataProviderException(sprintf(
-                '%s must be a backed enum to be used as an enum data source.',
-                $this->enumClass
-            ));
+            throw new DataProviderException([
+                '{enum} must be a backed enum to be used as an enum data source.',
+                'enum' => $this->enumClass,
+            ]);
         }
     }
 }

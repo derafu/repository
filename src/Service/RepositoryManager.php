@@ -109,7 +109,7 @@ class RepositoryManager implements RepositoryManagerInterface
             try {
                 $this->loaded[$repository] = $this->loadRepository($repository);
             } catch (Exception $e) {
-                throw new ManagerException($e->getMessage());
+                throw new ManagerException(['{message}', 'message' => $e->getMessage()]);
             }
         }
 
@@ -195,10 +195,10 @@ class RepositoryManager implements RepositoryManagerInterface
         // Throw error if the class doesn't exist as it might have been
         // misspelled by the programmer.
         if (!class_exists($entityClass)) {
-            throw new ManagerException(sprintf(
-                'Entity class %s does not exist. Could it be misspelled?',
-                $entityClass
-            ));
+            throw new ManagerException([
+                'Entity class {class} does not exist. Could it be misspelled?',
+                'class' => $entityClass,
+            ]);
         }
 
         // Return the entity class.
@@ -268,10 +268,10 @@ class RepositoryManager implements RepositoryManagerInterface
         // Throw error if the class doesn't exist as it might have been
         // misspelled by the programmer.
         if (!class_exists($repositoryClass)) {
-            throw new ManagerException(sprintf(
-                'Repository class %s does not exist. Could it be misspelled?',
-                $repositoryClass
-            ));
+            throw new ManagerException([
+                'Repository class {class} does not exist. Could it be misspelled?',
+                'class' => $repositoryClass,
+            ]);
         }
 
         // Return repository class.

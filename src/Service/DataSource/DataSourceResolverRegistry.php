@@ -69,10 +69,10 @@ final class DataSourceResolverRegistry implements DataSourceResolverRegistryInte
             }
         }
 
-        throw new DataProviderException(sprintf(
-            'No data source resolver is registered for "%s".',
-            $source
-        ));
+        throw new DataProviderException([
+            'No data source resolver is registered for "{source}".',
+            'source' => $source,
+        ]);
     }
 
     /**

@@ -168,10 +168,10 @@ class DataProvider implements DataProviderInterface
 
         // If there's no data source for the source an error is generated.
         if (!isset($this->sources[$source])) {
-            throw new DataProviderException(sprintf(
-                'No data source configured for %s.',
-                $source
-            ));
+            throw new DataProviderException([
+                'No data source configured for {source}.',
+                'source' => $source,
+            ]);
         }
 
         // Load source data through its data source.

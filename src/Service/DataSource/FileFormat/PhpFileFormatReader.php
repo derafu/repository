@@ -36,10 +36,10 @@ final class PhpFileFormatReader implements FileFormatReaderInterface
         $data = require $filepath;
 
         if (!is_array($data)) {
-            throw new DataProviderException(sprintf(
-                'The PHP file %s must return an array.',
-                $filepath
-            ));
+            throw new DataProviderException([
+                'The PHP file {file} must return an array.',
+                'file' => $filepath,
+            ]);
         }
 
         return $data;

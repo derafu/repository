@@ -37,10 +37,10 @@ final class YamlFileFormatReader implements FileFormatReaderInterface
         $data = Yaml::parseFile($filepath);
 
         if (!is_array($data)) {
-            throw new DataProviderException(sprintf(
-                'The YAML file %s must parse to an array.',
-                $filepath
-            ));
+            throw new DataProviderException([
+                'The YAML file {file} must parse to an array.',
+                'file' => $filepath,
+            ]);
         }
 
         return $data;

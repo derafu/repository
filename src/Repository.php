@@ -20,8 +20,8 @@ use Derafu\Repository\Contract\RepositoryInterface;
 use Derafu\Repository\Exception\EntityException;
 use Derafu\Support\Arr;
 use Derafu\Support\Factory;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use Doctrine\Common\Collections\Criteria;
-use InvalidArgumentException;
 use stdClass;
 use Throwable;
 
@@ -87,11 +87,11 @@ class Repository extends AbstractContainer implements RepositoryInterface
     public function find($id, $lockMode = null, $lockVersion = null): ?object
     {
         if (!is_string($id) && !is_int($id)) {
-            throw new InvalidArgumentException(sprintf(
-                'In method %s:find($id) an $id of type %s was passed and only string and int are allowed.',
-                static::class,
-                get_debug_type($id)
-            ));
+            throw new InvalidArgumentException([
+                'In method {class}:find($id) an $id of type {type} was passed and only string and int are allowed.',
+                'class' => static::class,
+                'type' => get_debug_type($id),
+            ]);
         }
 
         return isset($this->data[$id])
@@ -253,19 +253,19 @@ class Repository extends AbstractContainer implements RepositoryInterface
             try {
                 return ($this->entityClass)::from($data[$this->idAttribute ?? ''] ?? null);
             } catch (Throwable $e) {
-                throw new EntityException(sprintf(
-                    'Could not create enum entity %s: %s',
-                    $this->entityClass,
-                    $e->getMessage()
-                ));
+                throw new EntityException([
+                    'Could not create enum entity {entity}: {error}',
+                    'entity' => $this->entityClass,
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 
         if (enum_exists($this->entityClass)) {
-            throw new EntityException(sprintf(
-                '%s must be a backed enum to be used as a repository entity.',
-                $this->entityClass
-            ));
+            throw new EntityException([
+                '{entity} must be a backed enum to be used as a repository entity.',
+                'entity' => $this->entityClass,
+            ]);
         }
 
         return Factory::create($data, $this->entityClass);

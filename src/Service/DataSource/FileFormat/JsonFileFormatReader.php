@@ -36,10 +36,10 @@ final class JsonFileFormatReader implements FileFormatReaderInterface
         $data = json_decode(file_get_contents($filepath), true);
 
         if (!is_array($data)) {
-            throw new DataProviderException(sprintf(
-                'The JSON file %s must decode to an array.',
-                $filepath
-            ));
+            throw new DataProviderException([
+                'The JSON file {file} must decode to an array.',
+                'file' => $filepath,
+            ]);
         }
 
         return $data;

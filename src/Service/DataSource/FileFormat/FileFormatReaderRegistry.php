@@ -72,10 +72,10 @@ final class FileFormatReaderRegistry implements FileFormatReaderRegistryInterfac
             }
         }
 
-        throw new DataProviderException(sprintf(
-            'No file format reader is registered for the "%s" extension.',
-            $extension
-        ));
+        throw new DataProviderException([
+            'No file format reader is registered for the "{extension}" extension.',
+            'extension' => $extension,
+        ]);
     }
 
     /**
