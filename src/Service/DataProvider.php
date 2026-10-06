@@ -123,6 +123,14 @@ class DataProvider implements DataProviderInterface
     /**
      * {@inheritDoc}
      */
+    public function getConfigurationSchema(): array
+    {
+        return $this->configurationSchema;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getSources(): array
     {
         return array_keys($this->sources);

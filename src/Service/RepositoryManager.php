@@ -102,6 +102,14 @@ class RepositoryManager implements RepositoryManagerInterface
     /**
      * {@inheritDoc}
      */
+    public function getConfigurationSchema(): array
+    {
+        return $this->configurationSchema;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getRepository(string $repository): RepositoryInterface
     {
         // If the repository is not loaded it's loaded.
