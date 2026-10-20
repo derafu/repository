@@ -21,7 +21,15 @@ return [
     '{entity} must be a backed enum to be used as a repository entity.' =>
         '{entity} debe ser un enum con valores (backed enum) para usarse como entidad de un repositorio.',
 
+    'Entity class {entity} does not exist.' =>
+        'La clase de entidad {entity} no existe.',
+
+    'The ID attribute "{attribute}" of enum entity {entity} must be an int or string; {type} given.' =>
+        'El atributo ID "{attribute}" de la entidad enum {entity} debe ser int o string; se recibió {type}.',
+
     // Repositories.
+    'Repository row {key} must be an array; {type} given.' =>
+        'La fila {key} del repositorio debe ser un arreglo; se recibió {type}.',
     'In method {class}:find($id) an $id of type {type} was passed and only string and int are allowed.' =>
         'En el método {class}:find($id) se pasó un $id de tipo {type} y solo se permiten string e int.',
     'Offset cannot be negative.' =>
@@ -30,6 +38,10 @@ return [
         'El límite no puede ser negativo.',
 
     // Data sources.
+    'Normalization setting {attribute} must be a string; {type} given.' =>
+        'La opción de normalización {attribute} debe ser string; se recibió {type}.',
+    'Could not read JSON file {file}.' =>
+        'No se pudo leer el archivo JSON {file}.',
     'No data source configured for {source}.' =>
         'No hay una fuente de datos configurada para {source}.',
     'No data source resolver is registered for "{source}".' =>
@@ -44,6 +56,15 @@ return [
         'El archivo PHP {file} debe retornar un arreglo.',
     'The YAML file {file} must parse to an array.' =>
         'El archivo YAML {file} debe interpretarse como un arreglo.',
+
+    'No repository factory configured for {repository}.' =>
+        'No hay una fábrica de repositorios configurada para {repository}.',
+    'Repository setting {setting} must be a string; {type} given.' =>
+        'La opción de repositorio {setting} debe ser string; se recibió {type}.',
+    'Repository class {class} must extend {base}. Register a factory for other repository implementations.' =>
+        'La clase de repositorio {class} debe extender {base}. Registre una fábrica para otras implementaciones de repositorios.',
+    'Repository class {class} must be instantiable.' =>
+        'La clase de repositorio {class} debe poder instanciarse.',
 
     // Manager. The message of the error that happened is shown as is.
     '{message}' =>

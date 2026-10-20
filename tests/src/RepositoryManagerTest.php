@@ -16,6 +16,7 @@ use Derafu\Repository\Contract\DataProviderInterface;
 use Derafu\Repository\Contract\RepositoryInterface;
 use Derafu\Repository\Entity;
 use Derafu\Repository\Exception\ManagerException;
+use Derafu\Repository\Factory\DataProviderRepositoryFactory;
 use Derafu\Repository\Repository;
 use Derafu\Repository\Service\DataSource\DataSourceResolverRegistry;
 use Derafu\Repository\Service\DataSource\EnumDataSourceResolver;
@@ -27,8 +28,10 @@ use Derafu\Repository\Service\RepositoryManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Throwable;
 
 #[CoversClass(RepositoryManager::class)]
+#[CoversClass(DataProviderRepositoryFactory::class)]
 #[CoversClass(Repository::class)]
 #[CoversClass(Entity::class)]
 #[CoversClass(\Derafu\Repository\Service\DataProvider::class)]
@@ -40,6 +43,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(FileDataSourceResolver::class)]
 class RepositoryManagerTest extends TestCase
 {
+    /** @return array<string, array{array<string, string>, array{repositoryId?: string, repositoryIds?: list<string>, expectedCounts?: list<int>, expectedEntityClass?: string, expectedRepositoryClass?: string, expectedCount?: int, shouldBeCached?: bool, expectedException?: class-string<Throwable>}}> */
     public static function provideTestCases(): array
     {
         $tests = require dirname(__DIR__) . '/fixtures/repository-manager.php';
@@ -58,6 +62,10 @@ class RepositoryManagerTest extends TestCase
         return $testCases;
     }
 
+    /**
+     * @param array<string, string> $sources
+     * @param array{repositoryId?: string, repositoryIds?: list<string>, expectedCounts?: list<int>, expectedEntityClass?: string, expectedRepositoryClass?: string, expectedCount?: int, shouldBeCached?: bool, expectedException?: class-string<Throwable>} $case
+     */
     #[DataProvider('provideTestCases')]
     public function testRepositoryManagerCase(array $sources, array $case): void
     {
@@ -77,9 +85,11 @@ class RepositoryManagerTest extends TestCase
         }
     }
 
+    /** @param array{repositoryId?: string, repositoryIds?: list<string>, expectedCounts?: list<int>, expectedEntityClass?: string, expectedRepositoryClass?: string, expectedCount?: int, shouldBeCached?: bool, expectedException?: class-string<Throwable>} $case */
     private function testSingleRepository(RepositoryManager $manager, array $case): void
     {
-        $repositoryId = $case['repositoryId'];
+        $repositoryId = $case['repositoryId'] ?? null;
+        $this->assertIsString($repositoryId);
         $repository = $manager->getRepository($repositoryId);
 
         // Test that we get a valid repository
@@ -103,10 +113,13 @@ class RepositoryManagerTest extends TestCase
         }
     }
 
+    /** @param array{repositoryId?: string, repositoryIds?: list<string>, expectedCounts?: list<int>, expectedEntityClass?: string, expectedRepositoryClass?: string, expectedCount?: int, shouldBeCached?: bool, expectedException?: class-string<Throwable>} $case */
     private function testMultipleRepositories(RepositoryManager $manager, array $case): void
     {
-        $repositoryIds = $case['repositoryIds'];
-        $expectedCounts = $case['expectedCounts'];
+        $repositoryIds = $case['repositoryIds'] ?? null;
+        $expectedCounts = $case['expectedCounts'] ?? null;
+        $this->assertIsArray($repositoryIds);
+        $this->assertIsArray($expectedCounts);
 
         $repositories = [];
         foreach ($repositoryIds as $index => $repositoryId) {
@@ -116,6 +129,7 @@ class RepositoryManagerTest extends TestCase
         }
     }
 
+    /** @param array<string, string> $sources */
     private function createDataProvider(array $sources): DataProviderInterface
     {
         // Convert array sources to file paths
@@ -323,7 +337,8 @@ class RepositoryManagerTest extends TestCase
 
         // Test find
         $item = $repository->find('prod-001');
-        $this->assertNotNull($item);
+        $this->assertInstanceOf(Entity::class, $item);
+        $this->assertTrue(isset($item->name));
         $this->assertSame('Laptop XPS', $item->name);
 
         // Test findAll
@@ -336,7 +351,8 @@ class RepositoryManagerTest extends TestCase
 
         // Test findOneBy
         $computerItem = $repository->findOneBy(['category' => 'computers']);
-        $this->assertNotNull($computerItem);
+        $this->assertInstanceOf(Entity::class, $computerItem);
+        $this->assertTrue(isset($computerItem->category));
         $this->assertSame('computers', $computerItem->category);
 
         // Test count

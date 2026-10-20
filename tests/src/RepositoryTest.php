@@ -14,14 +14,18 @@ namespace Derafu\TestsRepository;
 
 use ArrayObject;
 use Derafu\Repository\Repository;
+use Doctrine\Common\Collections\Criteria;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use stdClass;
+use Throwable;
 
 #[CoversClass(Repository::class)]
 class RepositoryTest extends TestCase
 {
+    /** @return array<string, array{array<array-key, mixed>, array{method: string, args: list<mixed>, expected?: mixed, expectedException?: class-string<Throwable>}}> */
     public static function provideTestCases(): array
     {
         $tests = require dirname(__DIR__) . '/fixtures/repository.php';
@@ -40,6 +44,10 @@ class RepositoryTest extends TestCase
         return $testCases;
     }
 
+    /**
+     * @param array<array-key, mixed> $data
+     * @param array{method: string, args: list<mixed>, expected?: mixed, expectedException?: class-string<Throwable>} $case
+     */
     #[DataProvider('provideTestCases')]
     public function testRepositoryCase(array $data, array $case): void
     {
@@ -54,24 +62,63 @@ class RepositoryTest extends TestCase
             $this->expectException($expectedException);
         }
 
-        $result = match($method) {
-            'find' => $repository->find(...$args),
-            'findAll' => $repository->findAll(),
-            'findBy' => $repository->findBy(...$args),
-            'findOneBy' => $repository->findOneBy(...$args),
-            'count' => $repository->count(...$args),
-            'findByCriteria' => $repository->findByCriteria(...$args),
-            default => throw new InvalidArgumentException(sprintf(
-                'Método %s no soportado.',
-                $method
-            ))
-        };
+        switch ($method) {
+            case 'find':
+                $result = $repository->find(...$args);
+                break;
+            case 'findAll':
+                $result = $repository->findAll();
+                break;
+            case 'findBy':
+                $criteria = $args[0];
+                $this->assertIsArray($criteria);
+                $orderBy = $args[1] ?? null;
+                $limit = $args[2] ?? null;
+                $offset = $args[3] ?? null;
+                if ($orderBy !== null) {
+                    $this->assertIsArray($orderBy);
+                }
+                if ($limit !== null) {
+                    $this->assertIsInt($limit);
+                }
+                if ($offset !== null) {
+                    $this->assertIsInt($offset);
+                }
+                $result = $repository->findBy($criteria, $orderBy, $limit, $offset);
+                break;
+            case 'findOneBy':
+                $criteria = $args[0];
+                $this->assertIsArray($criteria);
+                $orderBy = $args[1] ?? null;
+                if ($orderBy !== null) {
+                    $this->assertIsArray($orderBy);
+                }
+                $result = $repository->findOneBy($criteria, $orderBy);
+                break;
+            case 'count':
+                $criteria = $args[0] ?? [];
+                $this->assertIsArray($criteria);
+                $result = $repository->count($criteria);
+                break;
+            case 'findByCriteria':
+                $criteria = $args[0];
+                $this->assertInstanceOf(Criteria::class, $criteria);
+                $result = $repository->findByCriteria($criteria);
+                break;
+            default:
+                throw new InvalidArgumentException(sprintf(
+                    'Método %s no soportado.',
+                    $method
+                ));
+        }
 
         if ($expectedException === null) {
 
             // Asegurar que el resultado sea arreglo, y si tiene objetos dentro que
             // también sean arreglos.
-            $result = json_decode(json_encode($result), true);
+            $json = json_encode($result);
+            $this->assertIsString($json);
+            $result = json_decode($json, true);
 
             $this->assertSame($expected, $result);
 
@@ -109,7 +156,7 @@ class RepositoryTest extends TestCase
 
         $foundItem = $repository->find(1); // find() busca por el índice de los datos.
 
-        $this->assertNotNull($foundItem);
+        $this->assertInstanceOf(stdClass::class, $foundItem);
         $this->assertSame(42, $foundItem->name);
     }
 
@@ -129,7 +176,7 @@ class RepositoryTest extends TestCase
 
             $foundItem = $repository->find(0);
 
-            $this->assertNotNull($foundItem);
+            $this->assertInstanceOf(stdClass::class, $foundItem);
             $this->assertSame('a', $foundItem->name);
         } finally {
             unlink($file);
@@ -153,7 +200,7 @@ class RepositoryTest extends TestCase
 
         $foundItem = $repository->find(0);
 
-        $this->assertNotNull($foundItem);
+        $this->assertInstanceOf(stdClass::class, $foundItem);
         $this->assertSame('a', $foundItem->name);
     }
 }

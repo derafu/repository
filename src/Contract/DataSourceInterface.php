@@ -28,7 +28,7 @@ interface DataSourceInterface
     /**
      * Reads and returns the raw data of the source.
      *
-     * @return array
+     * @return array<array-key, mixed>
      * @throws DataProviderException
      */
     public function read(): array;

@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace Derafu\Repository\Contract;
 
-use Derafu\Container\Contract\ContainerInterface;
 use Doctrine\Common\Collections\Criteria;
 
 /**
@@ -21,7 +20,7 @@ use Doctrine\Common\Collections\Criteria;
 * Provides standard methods to access and search objects/entities from a data
 * source.
 */
-interface RepositoryInterface extends ContainerInterface
+interface RepositoryInterface
 {
     /**
      * Finds an object by its identifier.
@@ -43,8 +42,8 @@ interface RepositoryInterface extends ContainerInterface
     /**
      * Finds objects according to specific criteria.
      *
-     * @param array $criteria Search criteria in format ['field' => 'value'].
-     * @param array|null $orderBy Ordering criteria ['field' => 'ASC|DESC'].
+     * @param array<array-key, mixed> $criteria Search criteria in format ['field' => 'value'].
+     * @param array<array-key, mixed>|null $orderBy Ordering criteria ['field' => 'ASC|DESC'].
      * @param int|null $limit Maximum number of results to return.
      * @param int|null $offset Number of results to skip.
      * @return object[] Array of objects that meet the criteria.
@@ -59,8 +58,8 @@ interface RepositoryInterface extends ContainerInterface
     /**
      * Finds a single object according to specific criteria.
      *
-     * @param array $criteria Search criteria in format ['field' => 'value'].
-     * @param array|null $orderBy Ordering criteria ['field' => 'ASC|DESC'].
+     * @param array<array-key, mixed> $criteria Search criteria in format ['field' => 'value'].
+     * @param array<array-key, mixed>|null $orderBy Ordering criteria ['field' => 'ASC|DESC'].
      * @return object|null The first object that meets the criteria or null if
      * it doesn't exist.
      */
@@ -69,7 +68,7 @@ interface RepositoryInterface extends ContainerInterface
     /**
      * Returns the total number of objects in the repository.
      *
-     * @param array $criteria Criteria when counting in format ['field' => 'value'].
+     * @param array<array-key, mixed> $criteria Criteria when counting in format ['field' => 'value'].
      * @return int Number of objects.
      */
     public function count(array $criteria = []): int;
@@ -84,7 +83,7 @@ interface RepositoryInterface extends ContainerInterface
      *
      * @param Criteria $criteria The `Criteria` object that defines the
      * conditions, order and limits of the results.
-     * @return array An array with entities that meet the criterion.
+     * @return array<array-key, mixed> An array with entities that meet the criterion.
      * @see \Doctrine\Common\Collections\Criteria
      * @see \Doctrine\Common\Collections\ArrayCollection
      */

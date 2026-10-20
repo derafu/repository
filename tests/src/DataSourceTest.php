@@ -43,6 +43,7 @@ class DataSourceTest extends TestCase
         'item-2' => ['name' => 'Beta'],
     ];
 
+    /** @return array<string, array{string}> */
     public static function provideValidFiles(): array
     {
         $dir = dirname(__DIR__) . '/fixtures/file-formats';
@@ -62,6 +63,7 @@ class DataSourceTest extends TestCase
         $this->assertSame(self::EXPECTED_DATA, $source->read());
     }
 
+    /** @return array<string, array{string}> */
     public static function provideInvalidFiles(): array
     {
         $dir = dirname(__DIR__) . '/fixtures/file-formats';
@@ -117,7 +119,10 @@ class DataSourceTest extends TestCase
 
             public function read(string $filepath): array
             {
-                return ['name' => trim(file_get_contents($filepath))];
+                $contents = file_get_contents($filepath);
+                TestCase::assertIsString($contents);
+
+                return ['name' => trim($contents)];
             }
         };
 
@@ -158,6 +163,8 @@ class DataSourceTest extends TestCase
 
         $this->assertInstanceOf(ArrayObject::class, $data);
         $this->assertCount(2, $data);
-        $this->assertSame('Active', $data['enum-case-1']['name']);
+        $row = $data['enum-case-1'];
+        $this->assertIsArray($row);
+        $this->assertSame('Active', $row['name']);
     }
 }

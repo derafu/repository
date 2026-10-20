@@ -35,7 +35,7 @@ interface FileFormatReaderInterface
      * Reads and parses the file, returning its data as an array.
      *
      * @param string $filepath
-     * @return array
+     * @return array<array-key, mixed>
      * @throws DataProviderException
      */
     public function read(string $filepath): array;

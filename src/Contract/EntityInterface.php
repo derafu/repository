@@ -22,7 +22,7 @@ interface EntityInterface extends Stringable
     /**
      * Returns entity properties as an array.
      *
-     * @return array
+     * @return array<array-key, mixed>
      */
     public function toArray(): array;
 

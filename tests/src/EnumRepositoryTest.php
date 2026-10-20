@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsRepository;
 
 use Derafu\Repository\Exception\EntityException;
+use Derafu\Repository\Factory\DataProviderRepositoryFactory;
 use Derafu\Repository\Repository;
 use Derafu\Repository\Service\DataProvider;
 use Derafu\Repository\Service\DataSource\DataSourceResolverRegistry;
@@ -29,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Repository::class)]
 #[CoversClass(DataProvider::class)]
 #[CoversClass(RepositoryManager::class)]
+#[CoversClass(DataProviderRepositoryFactory::class)]
 #[CoversClass(DataSourceResolverRegistry::class)]
 #[CoversClass(EnumDataSource::class)]
 #[CoversClass(EnumDataSourceResolver::class)]

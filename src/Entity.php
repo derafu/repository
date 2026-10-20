@@ -27,7 +27,7 @@ class Entity implements EntityInterface
     /**
      * Entity attributes.
      *
-     * @var array
+     * @var array<array-key, mixed>
      */
     private array $attributes = [];
 
@@ -157,7 +157,7 @@ class Entity implements EntityInterface
      * ("setters").
      *
      * @param string $name
-     * @param array $arguments
+     * @param array<array-key, mixed> $arguments
      * @return mixed
      */
     public function __call(string $name, array $arguments)
@@ -186,7 +186,7 @@ class Entity implements EntityInterface
      * Triggered when invoking an inaccessible method in a static context.
      *
      * @param string $name
-     * @param array $arguments
+     * @param array<array-key, mixed> $arguments
      * @return mixed
      */
     public static function __callStatic(string $name, array $arguments)

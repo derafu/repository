@@ -28,7 +28,7 @@ interface DataProviderInterface extends ConfigurableInterface
      * consumers that might require the same source.
      *
      * @param string $source Identifier of the requested source.
-     * @return ArrayObject
+     * @return ArrayObject<array-key, mixed>
      * @throws DataProviderException
      */
     public function fetch(string $source): ArrayObject;

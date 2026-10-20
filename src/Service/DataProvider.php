@@ -32,7 +32,7 @@ class DataProvider implements DataProviderInterface
     /**
      * Worker configuration schema.
      *
-     * @var array
+     * @var array<string, array<string, mixed>>
      */
     protected array $configurationSchema = [
         'normalization' => [
@@ -90,7 +90,7 @@ class DataProvider implements DataProviderInterface
     /**
      * In-memory data sources that have already had their data loaded.
      *
-     * @var array<string,ArrayObject>
+     * @var array<string, ArrayObject<array-key, mixed>>
      */
     private array $loaded;
 
@@ -100,7 +100,7 @@ class DataProvider implements DataProviderInterface
      * @param array<string,string|DataSourceInterface> $sources Data sources
      * (ID and source).
      * @param CacheInterface|null $cache Cache instance.
-     * @param array $config Configuration.
+     * @param array<array-key, mixed> $config Configuration.
      * @param DataSourceResolverRegistryInterface|null $sourceResolvers
      * Registry used to resolve the data source of string sources. When
      * `null`, a registry with the built-in resolvers (`enum:` and file path)
@@ -145,9 +145,17 @@ class DataProvider implements DataProviderInterface
         if (!isset($this->loaded[$source])) {
             $data = $this->fetchData($source);
 
-            $normalizationConfig = $this->getConfiguration()->get(
-                'normalization'
-            )->all();
+            $configuration = $this->getConfiguration();
+            $normalizationConfig = [
+                'nameAttribute' => $this->requireNormalizationAttribute(
+                    $configuration->get('normalization.nameAttribute'),
+                    'nameAttribute'
+                ),
+                'idAttribute' => $this->requireNormalizationAttribute(
+                    $configuration->get('normalization.idAttribute'),
+                    'idAttribute'
+                ),
+            ];
             $data = $this->normalizeData($data, $normalizationConfig);
 
             $this->loaded[$source] = new ArrayObject($data);
@@ -164,7 +172,7 @@ class DataProvider implements DataProviderInterface
      * sources where data might be located.
      *
      * @param string $source
-     * @return array
+     * @return array<array-key, mixed>
      */
     private function fetchData(string $source): array
     {
@@ -199,14 +207,16 @@ class DataProvider implements DataProviderInterface
      * Loads source data from a cache (if available).
      *
      * @param string $source
-     * @return array|null
+     * @return array<array-key, mixed>|null
      */
     private function fetchDataFromCacheSource(string $source): ?array
     {
         $key = $this->createCacheKey($source);
 
-        if (isset($this->cache) && $this->cache->has($key)) {
-            return $this->cache->get($key);
+        if (isset($this->cache)) {
+            $data = $this->cache->get($key);
+
+            return is_array($data) ? $data : null;
         }
 
         return null;
@@ -234,8 +244,9 @@ class DataProvider implements DataProviderInterface
      * Normalizes data in case it's an array of values and not an array of
      * arrays.
      *
-     * @param array $data
-     * @return array<int|string, array>
+     * @param array<array-key, mixed> $data
+     * @param array{nameAttribute: string, idAttribute: string} $config
+     * @return array<int|string, array<array-key, mixed>>
      */
     private function normalizeData(array $data, array $config): array
     {
@@ -251,6 +262,22 @@ class DataProvider implements DataProviderInterface
         }, $data);
 
         return Arr::ensureIdInElements($data, $config['idAttribute']);
+    }
+
+    /**
+     * Validates a configured normalization attribute without converting it.
+     */
+    private function requireNormalizationAttribute(mixed $value, string $attribute): string
+    {
+        if (!is_string($value)) {
+            throw new DataProviderException([
+                'Normalization setting {attribute} must be a string; {type} given.',
+                'attribute' => $attribute,
+                'type' => get_debug_type($value),
+            ]);
+        }
+
+        return $value;
     }
 
     /**

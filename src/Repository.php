@@ -43,7 +43,7 @@ class Repository extends AbstractContainer implements RepositoryInterface
     /**
      * Repository constructor.
      *
-     * @param string|array|ArrayAccess|ArrayObject $source Data array or PHP
+     * @param string|array<array-key, mixed>|ArrayAccess<*, *>|ArrayObject<*, *> $source Data array or PHP
      * file path.
      * @param string|null $entityClass Entity class associated with the
      * repository.
@@ -65,7 +65,7 @@ class Repository extends AbstractContainer implements RepositoryInterface
     /**
      * Loads repository data.
      *
-     * @param string|array|ArrayAccess|ArrayObject $source
+     * @param string|array<array-key, mixed>|ArrayAccess<*, *>|ArrayObject<*, *> $source
      * @return void
      */
     protected function load(
@@ -75,6 +75,7 @@ class Repository extends AbstractContainer implements RepositoryInterface
         if (!is_array($data)) {
             $data = $this->createFrom($data)->toArray();
         }
+        $data = $this->requireRows($data);
         if ($this->idAttribute) {
             $data = Arr::ensureIdInElements($data, $this->idAttribute);
         }
@@ -95,7 +96,7 @@ class Repository extends AbstractContainer implements RepositoryInterface
         }
 
         return isset($this->data[$id])
-            ? $this->createEntity($this->data[$id])
+            ? $this->createEntity($this->requireRow($this->data[$id], $id))
             : null
         ;
     }
@@ -105,9 +106,10 @@ class Repository extends AbstractContainer implements RepositoryInterface
      */
     public function findAll(): array
     {
-        return array_values($this->data->map(
-            fn ($item) => $this->createEntity($item)
-        )->toArray());
+        return array_values(array_map(
+            $this->createEntity(...),
+            $this->requireRows($this->data->toArray())
+        ));
     }
 
     /**
@@ -119,9 +121,10 @@ class Repository extends AbstractContainer implements RepositoryInterface
         ?int $limit = null,
         ?int $offset = null
     ): array {
-        $results = $this->data->filter(
-            fn ($item) => $this->matchCriteria($item, $criteria)
-        )->toArray();
+        $results = array_filter(
+            $this->requireRows($this->data->toArray()),
+            fn (array $item) => $this->matchCriteria($item, $criteria)
+        );
 
         if ($orderBy) {
             $results = $this->applyOrderBy($results, $orderBy);
@@ -165,11 +168,12 @@ class Repository extends AbstractContainer implements RepositoryInterface
             return count($this->data);
         }
 
-        $results = $this->data->filter(
-            fn ($item) => $this->matchCriteria($item, $criteria)
+        $results = array_filter(
+            $this->requireRows($this->data->toArray()),
+            fn (array $item) => $this->matchCriteria($item, $criteria)
         );
 
-        return $results->count();
+        return count($results);
     }
 
     /**
@@ -177,9 +181,10 @@ class Repository extends AbstractContainer implements RepositoryInterface
      */
     public function findByCriteria(Criteria $criteria): array
     {
-        return parent::matching($criteria)->map(
-            fn ($item) => $this->createEntity($item)
-        )->getValues();
+        $this->requireRows($this->data->toArray());
+        $rows = $this->requireRows(parent::matching($criteria)->toArray());
+
+        return array_values(array_map($this->createEntity(...), $rows));
     }
 
     /**
@@ -192,6 +197,9 @@ class Repository extends AbstractContainer implements RepositoryInterface
 
     /**
      * Checks if an item meets the search criteria.
+     *
+     * @param array<array-key, mixed> $item
+     * @param array<array-key, mixed> $criteria
      */
     protected function matchCriteria(array $item, array $criteria): bool
     {
@@ -210,12 +218,13 @@ class Repository extends AbstractContainer implements RepositoryInterface
     /**
      * Orders results according to specified criteria.
      *
-     * @param array $results Results to order.
-     * @param array $orderBy Ordering criteria ['field' => 'ASC|DESC'].
-     * @return array Ordered results.
+     * @param array<array-key, mixed> $results Results to order.
+     * @param array<array-key, mixed> $orderBy Ordering criteria ['field' => 'ASC|DESC'].
+     * @return array<array-key, array<array-key, mixed>> Ordered results.
      */
     protected function applyOrderBy(array $results, array $orderBy): array
     {
+        $results = $this->requireRows($results);
         uasort($results, function ($a, $b) use ($orderBy) {
             foreach ($orderBy as $field => $direction) {
                 if (!isset($a[$field]) || !isset($b[$field])) {
@@ -243,15 +252,26 @@ class Repository extends AbstractContainer implements RepositoryInterface
      * id attribute instead of being hydrated, as enums cannot be instantiated
      * with `new`.
      *
-     * @param array $data Data that will be assigned to the entity.
+     * @param array<array-key, mixed> $data Data that will be assigned to the entity.
      * @return object Entity instance with loaded data.
      * @throws EntityException If an enum entity cannot be resolved.
      */
     protected function createEntity(array $data): object
     {
         if (is_a($this->entityClass, BackedEnum::class, true)) {
+            $attribute = $this->idAttribute ?? '';
+            $value = $data[$attribute] ?? null;
+            if (!is_int($value) && !is_string($value)) {
+                throw new EntityException([
+                    'The ID attribute "{attribute}" of enum entity {entity} must be an int or string; {type} given.',
+                    'attribute' => $attribute,
+                    'entity' => $this->entityClass,
+                    'type' => get_debug_type($value),
+                ]);
+            }
+
             try {
-                return ($this->entityClass)::from($data[$this->idAttribute ?? ''] ?? null);
+                return ($this->entityClass)::from($value);
             } catch (Throwable $e) {
                 throw new EntityException([
                     'Could not create enum entity {entity}: {error}',
@@ -268,6 +288,46 @@ class Repository extends AbstractContainer implements RepositoryInterface
             ]);
         }
 
-        return Factory::create($data, $this->entityClass);
+        $entityClass = $this->entityClass;
+        if (!class_exists($entityClass)) {
+            throw new EntityException([
+                'Entity class {entity} does not exist.',
+                'entity' => $entityClass,
+            ]);
+        }
+
+        return Factory::create($data, $entityClass);
+    }
+
+    /**
+     * Validates rows without changing their keys or values.
+     *
+     * @param array<array-key, mixed> $rows
+     * @return array<array-key, array<array-key, mixed>>
+     */
+    private function requireRows(array $rows): array
+    {
+        $validated = [];
+        foreach ($rows as $key => $row) {
+            $validated[$key] = $this->requireRow($row, $key);
+        }
+
+        return $validated;
+    }
+
+    /**
+     * @return array<array-key, mixed>
+     */
+    private function requireRow(mixed $row, int|string $key): array
+    {
+        if (!is_array($row)) {
+            throw new InvalidArgumentException([
+                'Repository row {key} must be an array; {type} given.',
+                'key' => $key,
+                'type' => get_debug_type($row),
+            ]);
+        }
+
+        return $row;
     }
 }

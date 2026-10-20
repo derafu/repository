@@ -33,7 +33,14 @@ final class JsonFileFormatReader implements FileFormatReaderInterface
      */
     public function read(string $filepath): array
     {
-        $data = json_decode(file_get_contents($filepath), true);
+        $contents = @file_get_contents($filepath);
+        if ($contents === false) {
+            throw new DataProviderException([
+                'Could not read JSON file {file}.',
+                'file' => $filepath,
+            ]);
+        }
+        $data = json_decode($contents, true);
 
         if (!is_array($data)) {
             throw new DataProviderException([
