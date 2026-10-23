@@ -14,15 +14,18 @@ namespace Derafu\TestsRepository;
 
 use ArrayObject;
 use Derafu\Repository\Repository;
+use Derafu\Repository\Service\CriteriaEvaluator;
 use Doctrine\Common\Collections\Criteria;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Throwable;
 
 #[CoversClass(Repository::class)]
+#[UsesClass(CriteriaEvaluator::class)]
 class RepositoryTest extends TestCase
 {
     /** @return array<string, array{array<array-key, mixed>, array{method: string, args: list<mixed>, expected?: mixed, expectedException?: class-string<Throwable>}}> */

@@ -17,9 +17,13 @@ use ArrayIterator;
 use ArrayObject;
 use Derafu\Repository\Exception\EntityException;
 use Derafu\Repository\Repository;
+use Derafu\Repository\Service\CriteriaEvaluator;
 use Derafu\Repository\Translation\RepositoryTranslationResourceProvider;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
 use Derafu\Translation\TranslatorFactory;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Order;
+use Doctrine\Common\Collections\Selectable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -28,6 +32,7 @@ use stdClass;
 
 #[CoversClass(Repository::class)]
 #[UsesClass(EntityException::class)]
+#[UsesClass(CriteriaEvaluator::class)]
 #[UsesClass(RepositoryTranslationResourceProvider::class)]
 final class RepositoryRowsTest extends TestCase
 {
@@ -153,13 +158,62 @@ final class RepositoryRowsTest extends TestCase
         }
     }
 
-    public function testSortingMissingFieldsKeepsRowsAndTheirRelativeOrder(): void
+    public function testSortingByAFieldSomeRowsLackKeepsThoseRowsInTheirRelativeOrder(): void
     {
-        $rows = [2 => ['name' => 'First'], 8 => ['name' => 'Second']];
+        $rows = [
+            2 => ['name' => 'First'],
+            8 => ['name' => 'Second'],
+            9 => ['name' => 'Third', 'rank' => 1],
+        ];
         $repository = new Repository($rows);
-        $results = $repository->findBy([], ['missing' => 'ASC']);
-        $this->assertSame(array_values($rows), array_map(static fn (object $entity): array => (array) $entity, $results));
+        $names = static fn (array $entities): array => array_map(
+            static fn (stdClass $entity): string => $entity->name,
+            $entities
+        );
+
+        $this->assertSame(['First', 'Second', 'Third'], $names($repository->findBy([], ['rank' => 'ASC'])));
+        $this->assertSame(['Third', 'First', 'Second'], $names($repository->findBy([], ['rank' => 'DESC'])));
         $this->assertSame($rows, $repository->all());
+    }
+
+    public function testACriteriaReadsInsideFieldsWithDotsAndChecksTheirFirstPart(): void
+    {
+        $repository = new Repository([
+            1 => ['id' => 1, 'nested' => ['a' => 1]],
+            2 => ['id' => 2, 'nested' => ['a' => 2]],
+        ]);
+
+        $found = $repository->findByCriteria(Criteria::create()->where(Criteria::expr()->eq('nested.a', 2)));
+        $this->assertCount(1, $found);
+        $this->assertInstanceOf(stdClass::class, $found[0]);
+        $this->assertSame(2, $found[0]->id);
+
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $repository->findByCriteria(Criteria::create()->where(Criteria::expr()->eq('nope.a', 1)));
+    }
+
+    public function testMatchingGivesTheEntitiesThatFindByCriteriaGives(): void
+    {
+        $repository = new Repository([
+            1 => ['id' => 1, 'name' => 'a'],
+            2 => ['id' => 2, 'name' => 'b'],
+            3 => ['id' => 3, 'name' => 'c'],
+        ]);
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->gt('id', 1))
+            ->orderBy(['id' => Order::Descending])
+        ;
+
+        $ids = static fn (array $entities): array => array_map(
+            static fn (mixed $entity): mixed => $entity instanceof stdClass ? $entity->id : null,
+            $entities
+        );
+
+        $this->assertInstanceOf(Selectable::class, $repository);
+        $matching = $repository->matching($criteria);
+        $this->assertSame([0, 1], $matching->getKeys());
+        $this->assertSame([3, 2], $ids($matching->toArray()));
+        $this->assertSame($ids($matching->toArray()), $ids($repository->findByCriteria($criteria)));
     }
 
     public function testAMissingEntityClassIsRejectedOnlyWhenAnEntityIsCreated(): void

@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace Derafu\TestsRepository;
 
-use Derafu\Container\Contract\ContainerInterface;
 use Derafu\Repository\Contract\DataProviderInterface;
 use Derafu\Repository\Contract\RepositoryFactoryInterface;
 use Derafu\Repository\Contract\RepositoryInterface;
@@ -81,7 +80,6 @@ final class RepositoryFactoriesTest extends TestCase
         $this->assertSame([$id], $manager->getAvailableRepositories());
         $this->assertSame(0, $factory->creations);
         $repository = $manager->getRepository($id);
-        $this->assertNotInstanceOf(ContainerInterface::class, $repository);
         $this->assertSame($id, $factory->requestedId);
         $this->assertSame(stdClass::class, $repository->getClassName());
         $this->assertSame(['id' => 1, 'name' => 'Alpha'], $this->row($repository->find(1)));

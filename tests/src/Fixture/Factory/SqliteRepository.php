@@ -86,8 +86,18 @@ final class SqliteRepository implements RepositoryInterface
 
     public function findByCriteria(Criteria $criteria): array
     {
+        return $this->matching($criteria)->toArray();
+    }
+
+    /**
+     * @return ArrayCollection<int, object>
+     */
+    public function matching(Criteria $criteria): ArrayCollection
+    {
         // This test adapter uses collection criteria only for this optional path.
-        return (new ArrayCollection($this->findAll()))->matching($criteria)->toArray();
+        return new ArrayCollection(array_values(
+            (new ArrayCollection($this->findAll()))->matching($criteria)->toArray()
+        ));
     }
 
     public function getClassName(): string

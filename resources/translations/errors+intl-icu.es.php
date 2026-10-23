@@ -38,6 +38,12 @@ return [
         'El límite no puede ser negativo.',
     'ArrayAccess must implement Traversable to be convertible.' =>
         'ArrayAccess debe implementar Traversable para ser convertible.',
+    'Unknown field {field} in repository {entity}.' =>
+        'Campo {field} desconocido en el repositorio {entity}.',
+    'Invalid order direction {direction} for field {field}; only ASC and DESC are allowed.' =>
+        'Dirección de orden {direction} inválida para el campo {field}; solo se permiten ASC y DESC.',
+    'Unsupported criteria operator {operator}.' =>
+        'Operador de criterio {operator} no soportado.',
 
     // Data sources.
     'Normalization setting {attribute} must be a string; {type} given.' =>

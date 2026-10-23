@@ -15,8 +15,10 @@ namespace Derafu\Repository;
 use ArrayAccess;
 use ArrayObject;
 use BackedEnum;
+use Derafu\Repository\Contract\CriteriaEvaluatorInterface;
 use Derafu\Repository\Contract\RepositoryInterface;
 use Derafu\Repository\Exception\EntityException;
+use Derafu\Repository\Service\CriteriaEvaluator;
 use Derafu\Support\Arr;
 use Derafu\Support\Factory;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
@@ -49,6 +51,20 @@ class Repository implements RepositoryInterface
     private ArrayCollection $data;
 
     /**
+     * Fields of the repository: the keys of its rows.
+     *
+     * A repository has no schema, so a field is known if some row has it.
+     *
+     * @var array<array-key, true>
+     */
+    private array $fields = [];
+
+    /**
+     * Evaluator of the criteria used by matching().
+     */
+    private CriteriaEvaluatorInterface $criteriaEvaluator;
+
+    /**
      * Repository constructor.
      *
      * @param string|array<array-key, mixed>|ArrayAccess<*, *>|ArrayObject<*, *> $source Data array or PHP
@@ -57,15 +73,19 @@ class Repository implements RepositoryInterface
      * repository.
      * @param string|null $idAttribute Name of the ID attribute that must be
      * ensured to exist in elements loaded from the repository.
+     * @param CriteriaEvaluatorInterface|null $criteriaEvaluator Evaluator of
+     * the criteria used by matching().
      */
     public function __construct(
         string|array|ArrayAccess|ArrayObject $source,
         ?string $entityClass = null,
-        private ?string $idAttribute = null
+        private ?string $idAttribute = null,
+        ?CriteriaEvaluatorInterface $criteriaEvaluator = null
     ) {
         if ($entityClass !== null) {
             $this->entityClass = $entityClass;
         }
+        $this->criteriaEvaluator = $criteriaEvaluator ?? new CriteriaEvaluator();
 
         $this->load($source);
     }
@@ -88,6 +108,12 @@ class Repository implements RepositoryInterface
             $data = Arr::ensureIdInElements($data, $this->idAttribute);
         }
         $this->data = new ArrayCollection($data);
+        $this->fields = [];
+        foreach ($data as $row) {
+            foreach (array_keys($row) as $field) {
+                $this->fields[$field] = true;
+            }
+        }
     }
 
     /**
@@ -139,6 +165,9 @@ class Repository implements RepositoryInterface
         ?int $limit = null,
         ?int $offset = null
     ): array {
+        $this->requireFields(array_keys($criteria));
+        $orderBy = $orderBy ? $this->requireOrderBy($orderBy) : null;
+
         $results = array_filter(
             $this->requireRows($this->data->toArray()),
             fn (array $item) => $this->matchCriteria($item, $criteria)
@@ -186,6 +215,8 @@ class Repository implements RepositoryInterface
             return count($this->data);
         }
 
+        $this->requireFields(array_keys($criteria));
+
         $results = array_filter(
             $this->requireRows($this->data->toArray()),
             fn (array $item) => $this->matchCriteria($item, $criteria)
@@ -196,13 +227,48 @@ class Repository implements RepositoryInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return ArrayCollection<int, object>
+     */
+    public function matching(Criteria $criteria): ArrayCollection
+    {
+        // A field with dots reads inside a row, so its first part is the field
+        // of the repository, unless a field has that very name.
+        $this->requireFields(array_map(
+            fn (string $field): string => isset($this->fields[$field])
+                ? $field
+                : explode('.', $field, 2)[0],
+            $this->criteriaEvaluator->fields($criteria)
+        ));
+
+        $rows = $this->criteriaEvaluator->filter(
+            $this->requireRows($this->data->toArray()),
+            $criteria
+        );
+
+        $orderBy = [];
+        foreach ($criteria->getOrderings() as $field => $direction) {
+            $orderBy[$field] = $direction->name === 'Descending' ? 'DESC' : 'ASC';
+        }
+        if ($orderBy) {
+            $rows = $this->applyOrderBy($rows, $orderBy);
+        }
+
+        // A maximum of zero results is none, as in a database.
+        $limit = $criteria->getMaxResults();
+        $rows = $limit === 0
+            ? []
+            : array_slice($rows, max(0, $criteria->getFirstResult() ?? 0), $limit);
+
+        return new ArrayCollection(array_values(array_map($this->createEntity(...), $rows)));
+    }
+
+    /**
+     * {@inheritDoc}
      */
     public function findByCriteria(Criteria $criteria): array
     {
-        $this->requireRows($this->data->toArray());
-        $rows = $this->requireRows($this->data->matching($criteria)->toArray());
-
-        return array_values(array_map($this->createEntity(...), $rows));
+        return $this->matching($criteria)->toArray();
     }
 
     /**
@@ -214,7 +280,61 @@ class Repository implements RepositoryInterface
     }
 
     /**
+     * Rejects a field that no row has.
+     *
+     * A repository without rows has no fields to check against, so it accepts
+     * any field.
+     *
+     * @param list<int|string> $fields
+     */
+    private function requireFields(array $fields): void
+    {
+        if ($this->fields === []) {
+            return;
+        }
+
+        foreach ($fields as $field) {
+            if (!isset($this->fields[$field])) {
+                throw new InvalidArgumentException([
+                    'Unknown field {field} in repository {entity}.',
+                    'field' => $field,
+                    'entity' => $this->entityClass,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Validates the order and normalizes its directions.
+     *
+     * @param array<array-key, mixed> $orderBy Ordering ['field' => 'ASC|DESC'],
+     * the direction in any case and with spaces around.
+     * @return array<array-key, 'ASC'|'DESC'>
+     */
+    private function requireOrderBy(array $orderBy): array
+    {
+        $directions = [];
+        foreach ($orderBy as $field => $direction) {
+            $normalized = is_string($direction) ? strtoupper(trim($direction)) : null;
+            if ($normalized !== 'ASC' && $normalized !== 'DESC') {
+                throw new InvalidArgumentException([
+                    'Invalid order direction {direction} for field {field}; only ASC and DESC are allowed.',
+                    'direction' => is_string($direction) ? $direction : get_debug_type($direction),
+                    'field' => $field,
+                ]);
+            }
+            $this->requireFields([$field]);
+            $directions[$field] = $normalized;
+        }
+
+        return $directions;
+    }
+
+    /**
      * Checks if an item meets the search criteria.
+     *
+     * A field that the item does not have is null. A null value matches only
+     * null, and a list matches null if it contains it.
      *
      * @param array<array-key, mixed> $item
      * @param array<array-key, mixed> $criteria
@@ -222,10 +342,17 @@ class Repository implements RepositoryInterface
     protected function matchCriteria(array $item, array $criteria): bool
     {
         foreach ($criteria as $field => $value) {
-            if (!is_array($value)) {
-                $value = [$value];
-            }
-            if (!isset($item[$field]) || !in_array($item[$field], $value)) {
+            $values = is_array($value) ? $value : [$value];
+            $notNull = array_values(array_filter(
+                $values,
+                static fn (mixed $value): bool => $value !== null
+            ));
+            $actual = $item[$field] ?? null;
+
+            $matches = $actual === null
+                ? count($notNull) !== count($values)
+                : in_array($actual, $notNull);
+            if (!$matches) {
                 return false;
             }
         }
@@ -236,27 +363,33 @@ class Repository implements RepositoryInterface
     /**
      * Orders results according to specified criteria.
      *
+     * A field that a result does not have is null, which is the smallest
+     * value: first when ascending and last when descending.
+     *
      * @param array<array-key, mixed> $results Results to order.
-     * @param array<array-key, mixed> $orderBy Ordering criteria ['field' => 'ASC|DESC'].
+     * @param array<array-key, 'ASC'|'DESC'> $orderBy Ordering criteria ['field' => 'ASC|DESC'].
      * @return array<array-key, array<array-key, mixed>> Ordered results.
      */
     protected function applyOrderBy(array $results, array $orderBy): array
     {
         $results = $this->requireRows($results);
-        uasort($results, function ($a, $b) use ($orderBy) {
+        uasort($results, function (array $a, array $b) use ($orderBy): int {
             foreach ($orderBy as $field => $direction) {
-                if (!isset($a[$field]) || !isset($b[$field])) {
-                    continue;
-                }
+                $x = $a[$field] ?? null;
+                $y = $b[$field] ?? null;
 
-                $compare = $direction === 'DESC'
-                    ? -1 * ($a[$field] <=> $b[$field])
-                    : $a[$field] <=> $b[$field];
+                $compare = match (true) {
+                    $x === null && $y === null => 0,
+                    $x === null => -1,
+                    $y === null => 1,
+                    default => $x <=> $y,
+                };
 
                 if ($compare !== 0) {
-                    return $compare;
+                    return $direction === 'DESC' ? -$compare : $compare;
                 }
             }
+
             return 0;
         });
 

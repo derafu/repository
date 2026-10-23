@@ -52,6 +52,26 @@ final class ExceptionsTest extends TestCase
                 InvalidArgumentException::class,
                 'Limit cannot be negative.',
             ],
+            'an unknown field in the criteria' => [
+                fn () => (new Repository([['id' => 1]], idAttribute: 'id'))->findBy(['nope' => 1]),
+                InvalidArgumentException::class,
+                'Unknown field nope in repository stdClass.',
+            ],
+            'an unknown field in the order' => [
+                fn () => (new Repository([['id' => 1]], idAttribute: 'id'))->findBy([], ['nope' => 'ASC']),
+                InvalidArgumentException::class,
+                'Unknown field nope in repository stdClass.',
+            ],
+            'an order direction that is not ASC or DESC' => [
+                fn () => (new Repository([['id' => 1]], idAttribute: 'id'))->findBy([], ['id' => 'foo']),
+                InvalidArgumentException::class,
+                'Invalid order direction foo for field id; only ASC and DESC are allowed.',
+            ],
+            'an order direction that is not a string' => [
+                fn () => (new Repository([['id' => 1]], idAttribute: 'id'))->findBy([], ['id' => 1]),
+                InvalidArgumentException::class,
+                'Invalid order direction int for field id; only ASC and DESC are allowed.',
+            ],
             'an attribute that does not exist' => [
                 fn () => (new Entity())->setAttribute('id', 1)->getAttribute('name'),
                 EntityException::class,
