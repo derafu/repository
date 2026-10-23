@@ -30,7 +30,7 @@ final class SqliteRepository implements RepositoryInterface
     {
     }
 
-    public function find($id, $lockMode = null, $lockVersion = null): ?object
+    public function find(mixed $id, $lockMode = null, $lockVersion = null): ?object
     {
         return $this->findOneBy(['id' => $id]);
     }

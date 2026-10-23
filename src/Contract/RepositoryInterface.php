@@ -30,7 +30,7 @@ interface RepositoryInterface
      * @param mixed $lockVersion Not used in this implementation.
      * @return object|null The found object or null if it doesn't exist
      */
-    public function find($id, $lockMode = null, $lockVersion = null): ?object;
+    public function find(mixed $id, $lockMode = null, $lockVersion = null): ?object;
 
     /**
      * Finds all objects in the repository.

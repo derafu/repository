@@ -12,13 +12,14 @@ declare(strict_types=1);
 
 namespace Derafu\TestsRepository;
 
+use ArrayAccess;
+use ArrayIterator;
 use ArrayObject;
 use Derafu\Repository\Exception\EntityException;
 use Derafu\Repository\Repository;
 use Derafu\Repository\Translation\RepositoryTranslationResourceProvider;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
 use Derafu\Translation\TranslatorFactory;
-use Doctrine\Common\Collections\Criteria;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -66,6 +67,46 @@ final class RepositoryRowsTest extends TestCase
         $this->assertSame($row, (array) $repository->find(9));
     }
 
+    public function testATraversableArrayAccessSourceIsLoadedAsRows(): void
+    {
+        $rows = [3 => ['name' => 'Third'], 'key' => ['name' => 'Keyed']];
+        $repository = new Repository(new ArrayIterator($rows));
+        $this->assertSame($rows, $repository->all());
+        $this->assertSame(['name' => 'Keyed'], (array) $repository->find('key'));
+    }
+
+    public function testAnArrayAccessSourceThatIsNotTraversableIsRejected(): void
+    {
+        $source = new class () implements ArrayAccess {
+            public function offsetExists(mixed $offset): bool
+            {
+                return false;
+            }
+
+            public function offsetGet(mixed $offset): mixed
+            {
+                return null;
+            }
+
+            public function offsetSet(mixed $offset, mixed $value): void
+            {
+            }
+
+            public function offsetUnset(mixed $offset): void
+            {
+            }
+        };
+
+        try {
+            new Repository($source);
+            $this->fail('An ArrayAccess source must be traversable.');
+        } catch (TranslatableInvalidArgumentException $exception) {
+            $this->assertSame('ArrayAccess must implement Traversable to be convertible.', $exception->getMessage());
+            $translator = TranslatorFactory::create('es', resourceProviders: [new RepositoryTranslationResourceProvider()]);
+            $this->assertSame('ArrayAccess debe implementar Traversable para ser convertible.', $exception->trans($translator));
+        }
+    }
+
     /** @return array<string, array{mixed}> */
     public static function invalidRows(): array
     {
@@ -109,46 +150,6 @@ final class RepositoryRowsTest extends TestCase
             }
         } finally {
             fclose($resource);
-        }
-    }
-
-    /** @return array<string, array{string, bool}> */
-    public static function rowConsumers(): array
-    {
-        $cases = [];
-        foreach (['find', 'findAll', 'findBy', 'findOneBy', 'count', 'findByCriteria'] as $method) {
-            $cases[$method . ' after set'] = [$method, false];
-            $cases[$method . ' after collection mutation'] = [$method, true];
-        }
-
-        return $cases;
-    }
-
-    #[DataProvider('rowConsumers')]
-    public function testRowsAreCheckedAgainAfterInheritedMutation(string $method, bool $collectionMutation): void
-    {
-        $repository = new Repository(['good' => ['name' => 'Valid']]);
-        if ($collectionMutation) {
-            $repository->collection()->set('bad', 'invalid');
-        } else {
-            $repository->set('bad', 'invalid');
-        }
-        $snapshot = $repository->all();
-
-        try {
-            match ($method) {
-                'find' => $repository->find('bad'),
-                'findAll' => $repository->findAll(),
-                'findBy' => $repository->findBy(['name' => 'Valid'], ['name' => 'ASC']),
-                'findOneBy' => $repository->findOneBy(['name' => 'Valid']),
-                'count' => $repository->count(['name' => 'Valid']),
-                'findByCriteria' => $repository->findByCriteria(Criteria::create()->where(Criteria::expr()->eq('name', 'Valid'))),
-                default => $this->fail('Unknown row consumer.'),
-            };
-            $this->fail('An invalid row introduced after loading must be rejected.');
-        } catch (TranslatableInvalidArgumentException $exception) {
-            $this->assertSame('Repository row bad must be an array; string given.', $exception->getMessage());
-            $this->assertSame($snapshot, $repository->all());
         }
     }
 

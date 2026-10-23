@@ -61,7 +61,7 @@ final class DataProviderRepositoryFactoryTest extends TestCase
      * @param class-string<Repository> $repositoryClass
      */
     #[DataProvider('mappings')]
-    public function testMappingsAndNormalizationKeepExistingEntitiesAndContainerOperations(string $id, string $entityClass, string $repositoryClass): void
+    public function testMappingsAndNormalizationKeepExistingEntitiesAndRows(string $id, string $entityClass, string $repositoryClass): void
     {
         $provider = $this->provider($id);
         $factory = new DataProviderRepositoryFactory($provider, $this->configuration());
@@ -74,7 +74,6 @@ final class DataProviderRepositoryFactoryTest extends TestCase
         $this->assertSame('A', $entity->getAttribute('code'));
         $this->assertSame('Alpha', $entity->getAttribute('name'));
         $this->assertSame(['A' => ['code' => 'A', 'name' => 'Alpha']], $repository->all());
-        $this->assertTrue($repository->has('A'));
     }
 
     public function testManagerConfigurationStillSelectsDefaultEntityAndRepository(): void

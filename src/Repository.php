@@ -15,15 +15,16 @@ namespace Derafu\Repository;
 use ArrayAccess;
 use ArrayObject;
 use BackedEnum;
-use Derafu\Container\Abstract\AbstractContainer;
 use Derafu\Repository\Contract\RepositoryInterface;
 use Derafu\Repository\Exception\EntityException;
 use Derafu\Support\Arr;
 use Derafu\Support\Factory;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
 use stdClass;
 use Throwable;
+use Traversable;
 
 /**
  * Class for object/entity repositories.
@@ -31,7 +32,7 @@ use Throwable;
  * Provides standard methods to access and search objects/entities from a data
  * source.
  */
-class Repository extends AbstractContainer implements RepositoryInterface
+class Repository implements RepositoryInterface
 {
     /**
      * Entity class where data obtained through the repository will be placed.
@@ -39,6 +40,13 @@ class Repository extends AbstractContainer implements RepositoryInterface
      * @var string
      */
     protected string $entityClass = stdClass::class;
+
+    /**
+     * Rows of the repository, keyed by identifier.
+     *
+     * @var ArrayCollection<array-key, array<array-key, mixed>>
+     */
+    private ArrayCollection $data;
 
     /**
      * Repository constructor.
@@ -73,19 +81,29 @@ class Repository extends AbstractContainer implements RepositoryInterface
     ): void {
         $data = is_string($source) ? require $source : $source;
         if (!is_array($data)) {
-            $data = $this->createFrom($data)->toArray();
+            $data = $this->rowsFrom($data);
         }
         $data = $this->requireRows($data);
         if ($this->idAttribute) {
             $data = Arr::ensureIdInElements($data, $this->idAttribute);
         }
-        $this->data = $this->createFrom($data);
+        $this->data = new ArrayCollection($data);
+    }
+
+    /**
+     * Returns all the rows of the repository, keyed by identifier.
+     *
+     * @return array<array-key, mixed>
+     */
+    public function all(): array
+    {
+        return $this->data->toArray();
     }
 
     /**
      * {@inheritDoc}
      */
-    public function find($id, $lockMode = null, $lockVersion = null): ?object
+    public function find(mixed $id, $lockMode = null, $lockVersion = null): ?object
     {
         if (!is_string($id) && !is_int($id)) {
             throw new InvalidArgumentException([
@@ -182,7 +200,7 @@ class Repository extends AbstractContainer implements RepositoryInterface
     public function findByCriteria(Criteria $criteria): array
     {
         $this->requireRows($this->data->toArray());
-        $rows = $this->requireRows(parent::matching($criteria)->toArray());
+        $rows = $this->requireRows($this->data->matching($criteria)->toArray());
 
         return array_values(array_map($this->createEntity(...), $rows));
     }
@@ -297,6 +315,27 @@ class Repository extends AbstractContainer implements RepositoryInterface
         }
 
         return Factory::create($data, $entityClass);
+    }
+
+    /**
+     * Converts a source that is not an array into an array of rows.
+     *
+     * @param ArrayAccess<*, *>|ArrayObject<*, *> $data
+     * @return array<array-key, mixed>
+     */
+    private function rowsFrom(ArrayAccess|ArrayObject $data): array
+    {
+        if ($data instanceof ArrayObject) {
+            return (array) $data;
+        }
+
+        if (!$data instanceof Traversable) {
+            throw new InvalidArgumentException(
+                'ArrayAccess must implement Traversable to be convertible.'
+            );
+        }
+
+        return iterator_to_array($data);
     }
 
     /**

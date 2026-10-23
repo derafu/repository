@@ -36,6 +36,8 @@ return [
         'El offset no puede ser negativo.',
     'Limit cannot be negative.' =>
         'El límite no puede ser negativo.',
+    'ArrayAccess must implement Traversable to be convertible.' =>
+        'ArrayAccess debe implementar Traversable para ser convertible.',
 
     // Data sources.
     'Normalization setting {attribute} must be a string; {type} given.' =>

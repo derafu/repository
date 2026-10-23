@@ -29,6 +29,7 @@
         "derafu/config": "dev-main",
         "derafu/support": "dev-main",
         "derafu/translation": "dev-main",
+        "doctrine/collections": "^3.1",
         "psr/simple-cache": "^3.0"
     },
     "require-dev": {
