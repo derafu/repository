@@ -15,11 +15,11 @@ namespace Derafu\Repository;
 use ArrayAccess;
 use ArrayObject;
 use BackedEnum;
+use Derafu\Array\ArrayTable;
 use Derafu\Repository\Contract\CriteriaEvaluatorInterface;
 use Derafu\Repository\Contract\RepositoryInterface;
 use Derafu\Repository\Exception\EntityException;
 use Derafu\Repository\Service\CriteriaEvaluator;
-use Derafu\Support\Arr;
 use Derafu\Support\Factory;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -105,7 +105,7 @@ class Repository implements RepositoryInterface
         }
         $data = $this->requireRows($data);
         if ($this->idAttribute) {
-            $data = Arr::ensureIdInElements($data, $this->idAttribute);
+            $data = ArrayTable::withKeyColumn($data, $this->idAttribute);
         }
         $this->data = new ArrayCollection($data);
         $this->fields = [];

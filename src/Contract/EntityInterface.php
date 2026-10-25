@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Repository\Contract;
 
+use Derafu\Array\ArrayReader;
 use Stringable;
 
 /**
@@ -25,6 +26,11 @@ interface EntityInterface extends Stringable
      * @return array<array-key, mixed>
      */
     public function toArray(): array;
+
+    /**
+     * Returns a typed reader over a snapshot of the entity attributes.
+     */
+    public function getReader(): ArrayReader;
 
     /**
      * Assign an attribute to the entity.

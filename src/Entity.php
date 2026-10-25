@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Repository;
 
+use Derafu\Array\ArrayReader;
 use Derafu\Repository\Contract\EntityInterface;
 use Derafu\Repository\Exception\EntityException;
 
@@ -45,6 +46,14 @@ class Entity implements EntityInterface
     public function toArray(): array
     {
         return $this->attributes;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getReader(): ArrayReader
+    {
+        return ArrayReader::fromArray($this->attributes);
     }
 
     /**

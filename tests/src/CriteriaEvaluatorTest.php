@@ -106,6 +106,24 @@ final class CriteriaEvaluatorTest extends TestCase
         $this->assertSame(self::ROWS, (new CriteriaEvaluator())->filter(self::ROWS, $criteria));
     }
 
+    public function testLiteralNullFieldTakesPrecedenceOverANestedValue(): void
+    {
+        $rows = [
+            'literal' => ['profile.name' => null, 'profile' => ['name' => 'Ana']],
+            'nested' => ['profile' => ['name' => 'Ana']],
+        ];
+        $evaluator = new CriteriaEvaluator();
+
+        $this->assertSame(['literal'], array_keys($evaluator->filter(
+            $rows,
+            Criteria::create()->where(Criteria::expr()->eq('profile.name', null))
+        )));
+        $this->assertSame(['nested'], array_keys($evaluator->filter(
+            $rows,
+            Criteria::create()->where(Criteria::expr()->eq('profile.name', 'Ana'))
+        )));
+    }
+
     public function testListsTheFieldsOfTheConditionsAndOfTheOrderOnce(): void
     {
         $e = Criteria::expr();

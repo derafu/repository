@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Repository\Service;
 
 use Closure;
+use Derafu\Array\ArrayPath;
 use Derafu\Repository\Contract\CriteriaEvaluatorInterface;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use Doctrine\Common\Collections\Criteria;
@@ -164,25 +165,14 @@ final class CriteriaEvaluator extends ExpressionVisitor implements CriteriaEvalu
 
     /**
      * Reads a field of a row. A field that the row does not have is null, and
-     * a field with dots reads inside the arrays of the row.
+     * a field with dots reads inside the arrays of the row, unless the row has
+     * a field with that very name.
      *
      * @param array<array-key, mixed> $row
      */
     private static function value(array $row, string $field): mixed
     {
-        if (array_key_exists($field, $row)) {
-            return $row[$field];
-        }
-
-        $value = $row;
-        foreach (explode('.', $field) as $segment) {
-            if (!is_array($value) || !array_key_exists($segment, $value)) {
-                return null;
-            }
-            $value = $value[$segment];
-        }
-
-        return $value;
+        return ArrayPath::get($row, $field);
     }
 
     private static function equals(mixed $actual, mixed $expected): ?bool

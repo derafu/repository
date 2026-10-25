@@ -13,13 +13,13 @@ declare(strict_types=1);
 namespace Derafu\Repository\Service;
 
 use ArrayObject;
+use Derafu\Array\ArrayTable;
 use Derafu\Config\Trait\ConfigurableTrait;
 use Derafu\Repository\Contract\DataProviderInterface;
 use Derafu\Repository\Contract\DataSourceInterface;
 use Derafu\Repository\Contract\DataSourceResolverRegistryInterface;
 use Derafu\Repository\Exception\DataProviderException;
 use Derafu\Repository\Service\DataSource\DataSourceResolverRegistry;
-use Derafu\Support\Arr;
 use Psr\SimpleCache\CacheInterface;
 
 /**
@@ -261,7 +261,7 @@ class DataProvider implements DataProviderInterface
             return $entity;
         }, $data);
 
-        return Arr::ensureIdInElements($data, $config['idAttribute']);
+        return ArrayTable::withKeyColumn($data, $config['idAttribute']);
     }
 
     /**
