@@ -41,7 +41,9 @@
         "symfony/yaml": "^8.1",
         "nikic/php-parser": "^5.9",
         "doctrine/orm": "^3.7",
-        "doctrine/dbal": "^4.5"
+        "doctrine/dbal": "^4.5",
+        "symfony/dependency-injection": "^8.1",
+        "symfony/config": "^8.1"
     },
     "suggest": {
         "nikic/php-parser": "Required by the tests of the messages of the package (Derafu\\Translation\\Lint reads the code)."
