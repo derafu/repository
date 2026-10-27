@@ -1,0 +1,34 @@
+imports:
+    - { resource: '../../../resources/config/repository-services.yaml' }
+
+services:
+    test.repository_services:
+        class: Symfony\Component\DependencyInjection\ServiceLocator
+        public: true
+        tags: [container.service_locator]
+        arguments:
+            -
+                'Derafu\Repository\Contract\RepositoryManagerInterface': '@Derafu\Repository\Contract\RepositoryManagerInterface'
+                'Derafu\Repository\Service\RepositoryManager': '@Derafu\Repository\Service\RepositoryManager'
+                'Derafu\Repository\Contract\DataProviderInterface': '@Derafu\Repository\Contract\DataProviderInterface'
+                'Derafu\Repository\Service\DataProvider': '@Derafu\Repository\Service\DataProvider'
+                'Derafu\Repository\Service\ArrayRepositorySourceProvider': '@Derafu\Repository\Service\ArrayRepositorySourceProvider'
+                'Derafu\Repository\Factory\DataProviderRepositoryFactory': '@Derafu\Repository\Factory\DataProviderRepositoryFactory'
+                'Derafu\Repository\Contract\CriteriaEvaluatorInterface': '@Derafu\Repository\Contract\CriteriaEvaluatorInterface'
+                'Derafu\Repository\Service\CriteriaEvaluator': '@Derafu\Repository\Service\CriteriaEvaluator'
+                'Derafu\Repository\Contract\DataSourceResolverRegistryInterface': '@Derafu\Repository\Contract\DataSourceResolverRegistryInterface'
+                'Derafu\Repository\Service\DataSource\DataSourceResolverRegistry': '@Derafu\Repository\Service\DataSource\DataSourceResolverRegistry'
+                'Derafu\Repository\Service\DataSource\EnumDataSourceResolver': '@Derafu\Repository\Service\DataSource\EnumDataSourceResolver'
+                'Derafu\Repository\Service\DataSource\FileDataSourceResolver': '@Derafu\Repository\Service\DataSource\FileDataSourceResolver'
+                'Derafu\Repository\Contract\FileFormatReaderRegistryInterface': '@Derafu\Repository\Contract\FileFormatReaderRegistryInterface'
+                'Derafu\Repository\Service\DataSource\FileFormat\FileFormatReaderRegistry': '@Derafu\Repository\Service\DataSource\FileFormat\FileFormatReaderRegistry'
+                'Derafu\Repository\Service\DataSource\FileFormat\PhpFileFormatReader': '@Derafu\Repository\Service\DataSource\FileFormat\PhpFileFormatReader'
+                'Derafu\Repository\Service\DataSource\FileFormat\JsonFileFormatReader': '@Derafu\Repository\Service\DataSource\FileFormat\JsonFileFormatReader'
+                'Derafu\Repository\Service\DataSource\FileFormat\YamlFileFormatReader': '@Derafu\Repository\Service\DataSource\FileFormat\YamlFileFormatReader'
+                'Derafu\Repository\Translation\RepositoryTranslationResourceProvider': '@Derafu\Repository\Translation\RepositoryTranslationResourceProvider'
+
+    test.translator:
+        class: Symfony\Component\Translation\Translator
+        factory: ['Derafu\Translation\TranslatorFactory', 'create']
+        arguments: ['es', ['en'], !tagged_iterator derafu_translation.resource_provider]
+        public: true

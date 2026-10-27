@@ -1,0 +1,9 @@
+services:
+    test.core_sources:
+        class: Derafu\Repository\Service\ArrayRepositorySourceProvider
+        arguments:
+            -
+                core: '%kernel.project_dir%/tests/fixtures/services/core.php'
+                live: '%kernel.project_dir%/tests/fixtures/services/core.php'
+                statuses: 'enum:Derafu\TestsRepository\Fixture\Status'
+        tags: ['derafu_repository.source_provider']

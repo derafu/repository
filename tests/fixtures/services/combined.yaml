@@ -1,0 +1,42 @@
+imports:
+    - { resource: default.yaml }
+    - { resource: core.yaml }
+    - { resource: pro.yaml }
+
+parameters:
+    derafu_repository.sources:
+        parameter: '%kernel.project_dir%/tests/fixtures/services/core.php'
+    derafu_repository.data_provider.config:
+        normalization: { idAttribute: codigo, nameAttribute: glosa }
+    derafu_repository.repository_factory.config:
+        entityClass: Derafu\TestsRepository\Fixture\Factory\Entity\DefaultMapped
+        repositoryClass: Derafu\TestsRepository\Fixture\Factory\MappedRepository
+
+services:
+    test.connection:
+        class: PDO
+        arguments: ['sqlite::memory:']
+        calls:
+            - [exec, ['CREATE TABLE catalog (id INTEGER PRIMARY KEY, name TEXT NOT NULL)']]
+            - [exec, ["INSERT INTO catalog VALUES (1, 'Database item')"]]
+        public: true
+
+    Derafu\TestsRepository\Fixture\Services\SqliteCatalogueSource:
+        arguments: ['@test.connection']
+
+    Derafu\TestsRepository\Fixture\Services\CatalogueResolver:
+        arguments: ['@Derafu\TestsRepository\Fixture\Services\SqliteCatalogueSource']
+        tags: ['derafu_repository.source_resolver']
+
+    Derafu\TestsRepository\Fixture\Services\IniCatalogueReader:
+        tags: ['derafu_repository.file_format_reader']
+
+    Derafu\TestsRepository\Fixture\Services\SqliteRepositoryFactory:
+        arguments: ['@test.connection']
+        tags:
+            - { name: derafu_repository.repository_factory, repository: live }
+
+    Derafu\TestsRepository\Fixture\Services\RecordingCriteriaEvaluator:
+        decorates: Derafu\Repository\Contract\CriteriaEvaluatorInterface
+        arguments: ['@.inner']
+        public: true

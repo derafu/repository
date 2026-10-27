@@ -18,8 +18,8 @@ use Derafu\Config\Trait\ConfigurableTrait;
 use Derafu\Repository\Contract\DataProviderInterface;
 use Derafu\Repository\Contract\DataSourceInterface;
 use Derafu\Repository\Contract\DataSourceResolverRegistryInterface;
+use Derafu\Repository\Contract\RepositorySourceProviderInterface;
 use Derafu\Repository\Exception\DataProviderException;
-use Derafu\Repository\Service\DataSource\DataSourceResolverRegistry;
 use Psr\SimpleCache\CacheInterface;
 
 /**
@@ -71,7 +71,7 @@ class DataProvider implements DataProviderInterface
      *
      * @var array<string, string|DataSourceInterface>
      */
-    private array $sources;
+    private array $sources = [];
 
     /**
      * Instance to access a cache to search for data.
@@ -95,27 +95,29 @@ class DataProvider implements DataProviderInterface
     private array $loaded;
 
     /**
-     * Worker constructor.
-     *
-     * @param array<string,string|DataSourceInterface> $sources Data sources
-     * (ID and source).
-     * @param CacheInterface|null $cache Cache instance.
-     * @param array<array-key, mixed> $config Configuration.
-     * @param DataSourceResolverRegistryInterface|null $sourceResolvers
-     * Registry used to resolve the data source of string sources. When
-     * `null`, a registry with the built-in resolvers (`enum:` and file path)
-     * is used.
+     * @param iterable<RepositorySourceProviderInterface> $sourceProviders
+     * @param array<array-key, mixed> $config
      */
     public function __construct(
-        array $sources = [],
+        iterable $sourceProviders,
+        DataSourceResolverRegistryInterface $sourceResolvers,
         ?CacheInterface $cache = null,
         array $config = [],
-        ?DataSourceResolverRegistryInterface $sourceResolvers = null
     ) {
-        $this->sources = $sources;
         $this->cache = $cache;
-        $this->sourceResolvers = $sourceResolvers ?? new DataSourceResolverRegistry();
-        if (!empty($config)) {
+        $this->sourceResolvers = $sourceResolvers;
+        foreach ($sourceProviders as $provider) {
+            foreach ($provider->getSources() as $identifier => $source) {
+                if (array_key_exists($identifier, $this->sources)) {
+                    throw new DataProviderException([
+                        'Repository source "{source}" is registered more than once.',
+                        'source' => $identifier,
+                    ]);
+                }
+                $this->sources[$identifier] = $source;
+            }
+        }
+        if ($config !== []) {
             $this->setConfiguration($config);
         }
     }

@@ -12,15 +12,11 @@ declare(strict_types=1);
 
 namespace Derafu\Repository\Service;
 
-use Derafu\Config\Trait\ConfigurableTrait;
 use Derafu\Repository\Contract\DataProviderInterface;
 use Derafu\Repository\Contract\RepositoryFactoryInterface;
 use Derafu\Repository\Contract\RepositoryInterface;
 use Derafu\Repository\Contract\RepositoryManagerInterface;
-use Derafu\Repository\Entity;
 use Derafu\Repository\Exception\ManagerException;
-use Derafu\Repository\Factory\DataProviderRepositoryFactory;
-use Derafu\Repository\Repository;
 use Exception;
 
 /**
@@ -28,46 +24,25 @@ use Exception;
  */
 class RepositoryManager implements RepositoryManagerInterface
 {
-    use ConfigurableTrait;
-
-    /**
-     * Worker configuration schema.
-     *
-     * @var array<string, array<string, mixed>>
-     */
-    protected array $configurationSchema = [
-        'entityClass' => [
-            'types' => 'string',
-            'default' => Entity::class,
-        ],
-        'repositoryClass' => [
-            'types' => 'string',
-            'default' => Repository::class,
-        ],
-    ];
-
     /** @var array<string, RepositoryInterface> */
     private array $loaded = [];
 
-    /**
-     * Explicit factories take precedence over the data-provider fallback.
-     *
-     * A manager with only explicit factories does not need a data provider.
-     *
-     * @param array<string, RepositoryFactoryInterface> $factories
-     */
-    public function __construct(
-        private readonly ?DataProviderInterface $dataProvider = null,
-        private readonly array $factories = [],
-    ) {
-    }
+    /** @var array<string, RepositoryFactoryInterface> */
+    private readonly array $factories;
 
     /**
-     * {@inheritDoc}
+     * Explicit factories take precedence over the injected default factory.
+     * A manager with only explicit factories needs neither a default factory
+     * nor a data provider.
+     *
+     * @param iterable<string, RepositoryFactoryInterface> $factories
      */
-    public function getConfigurationSchema(): array
-    {
-        return $this->configurationSchema;
+    public function __construct(
+        private readonly ?RepositoryFactoryInterface $defaultFactory = null,
+        private readonly ?DataProviderInterface $dataProvider = null,
+        iterable $factories = [],
+    ) {
+        $this->factories = is_array($factories) ? $factories : iterator_to_array($factories);
     }
 
     /**
@@ -104,16 +79,13 @@ class RepositoryManager implements RepositoryManagerInterface
         if (isset($this->factories[$repository])) {
             return $this->factories[$repository]->create($repository);
         }
-        if ($this->dataProvider === null) {
+        if ($this->defaultFactory === null) {
             throw new ManagerException([
                 'No repository factory configured for {repository}.',
                 'repository' => $repository,
             ]);
         }
 
-        return (new DataProviderRepositoryFactory(
-            $this->dataProvider,
-            $this->getConfiguration()
-        ))->create($repository);
+        return $this->defaultFactory->create($repository);
     }
 }

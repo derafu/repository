@@ -20,11 +20,18 @@ use Derafu\Repository\Service\DataSource\EnumDataSourceResolver;
 use Derafu\Repository\Service\DataSource\FileDataSource;
 use Derafu\Repository\Service\DataSource\FileDataSourceResolver;
 use Derafu\Repository\Service\DataSource\FileFormat\FileFormatReaderRegistry;
+use Derafu\Repository\Service\DataSource\FileFormat\JsonFileFormatReader;
+use Derafu\Repository\Service\DataSource\FileFormat\PhpFileFormatReader;
+use Derafu\Repository\Service\DataSource\FileFormat\YamlFileFormatReader;
 use Derafu\TestsRepository\Fixture\PureStatus;
 use Derafu\TestsRepository\Fixture\Status;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
+#[UsesClass(PhpFileFormatReader::class)]
+#[UsesClass(JsonFileFormatReader::class)]
+#[UsesClass(YamlFileFormatReader::class)]
 #[CoversClass(EnumDataSource::class)]
 #[CoversClass(EnumDataSourceResolver::class)]
 #[CoversClass(FileDataSourceResolver::class)]
@@ -83,14 +90,14 @@ class EnumDataSourceTest extends TestCase
 
     public function testFileDataSourceResolverSupportsAnySource(): void
     {
-        $resolver = new FileDataSourceResolver(new FileFormatReaderRegistry());
+        $resolver = new FileDataSourceResolver(new FileFormatReaderRegistry([new PhpFileFormatReader(), new JsonFileFormatReader(), new YamlFileFormatReader()]));
 
         $this->assertTrue($resolver->supports('anything'));
     }
 
     public function testFileDataSourceResolverResolvesToFileDataSource(): void
     {
-        $resolver = new FileDataSourceResolver(new FileFormatReaderRegistry());
+        $resolver = new FileDataSourceResolver(new FileFormatReaderRegistry([new PhpFileFormatReader(), new JsonFileFormatReader(), new YamlFileFormatReader()]));
 
         $source = $resolver->resolve(
             dirname(__DIR__) . '/fixtures/file-formats/valid.php'
@@ -101,7 +108,7 @@ class EnumDataSourceTest extends TestCase
 
     public function testRegistryPrefersEnumResolverOverFileCatchAll(): void
     {
-        $registry = new DataSourceResolverRegistry();
+        $registry = new DataSourceResolverRegistry([new EnumDataSourceResolver(), new FileDataSourceResolver(new FileFormatReaderRegistry([new PhpFileFormatReader(), new JsonFileFormatReader(), new YamlFileFormatReader()]))]);
 
         $resolver = $registry->getResolver('enum:' . Status::class);
 
@@ -110,7 +117,7 @@ class EnumDataSourceTest extends TestCase
 
     public function testRegistryFallsBackToFileResolver(): void
     {
-        $registry = new DataSourceResolverRegistry();
+        $registry = new DataSourceResolverRegistry([new EnumDataSourceResolver(), new FileDataSourceResolver(new FileFormatReaderRegistry([new PhpFileFormatReader(), new JsonFileFormatReader(), new YamlFileFormatReader()]))]);
 
         $resolver = $registry->getResolver(
             dirname(__DIR__) . '/fixtures/file-formats/valid.php'

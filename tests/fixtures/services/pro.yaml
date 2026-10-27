@@ -1,0 +1,11 @@
+services:
+    test.pro_sources:
+        class: Derafu\Repository\Service\ArrayRepositorySourceProvider
+        arguments:
+            -
+                pro: '%kernel.project_dir%/tests/fixtures/services/pro.json'
+                yaml: '%kernel.project_dir%/tests/fixtures/services/catalogue.yaml'
+                ini: '%kernel.project_dir%/tests/fixtures/services/data.catalogue'
+                database_source: '@Derafu\TestsRepository\Fixture\Services\SqliteCatalogueSource'
+                resolved_source: 'catalogue:database'
+        tags: ['derafu_repository.source_provider']

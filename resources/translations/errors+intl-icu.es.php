@@ -11,6 +11,8 @@ declare(strict_types=1);
  */
 
 return [
+    'Repository source "{source}" is registered more than once.' =>
+        'La fuente de repositorio "{source}" está registrada más de una vez.',
     // Entities.
     'Attribute {attribute} does not exist in entity {entity}.' =>
         'El atributo {attribute} no existe en la entidad {entity}.',

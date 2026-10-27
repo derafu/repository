@@ -21,6 +21,7 @@ use Derafu\Repository\Exception\ManagerException;
 use Derafu\Repository\Factory\DataProviderRepositoryFactory;
 use Derafu\Repository\Mapping as DEM;
 use Derafu\Repository\Repository;
+use Derafu\Repository\Service\CriteriaEvaluator;
 use Derafu\Repository\Service\RepositoryManager;
 use Derafu\Repository\Translation\RepositoryTranslationResourceProvider;
 use Derafu\TestsRepository\Fixture\Factory\AbstractRepository;
@@ -36,6 +37,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
+#[UsesClass(CriteriaEvaluator::class)]
 #[CoversClass(DataProviderRepositoryFactory::class)]
 #[UsesClass(Repository::class)]
 #[UsesClass(Entity::class)]
@@ -64,7 +66,7 @@ final class DataProviderRepositoryFactoryTest extends TestCase
     public function testMappingsAndNormalizationKeepExistingEntitiesAndRows(string $id, string $entityClass, string $repositoryClass): void
     {
         $provider = $this->provider($id);
-        $factory = new DataProviderRepositoryFactory($provider, $this->configuration());
+        $factory = new DataProviderRepositoryFactory($provider, new CriteriaEvaluator(), $this->configuration());
         $repository = $factory->create($id);
         $this->assertInstanceOf($repositoryClass, $repository);
         $this->assertInstanceOf(Repository::class, $repository);
@@ -76,10 +78,12 @@ final class DataProviderRepositoryFactoryTest extends TestCase
         $this->assertSame(['A' => ['code' => 'A', 'name' => 'Alpha']], $repository->all());
     }
 
-    public function testManagerConfigurationStillSelectsDefaultEntityAndRepository(): void
+    public function testFactoryConfigurationStillSelectsDefaultEntityAndRepository(): void
     {
-        $manager = new RepositoryManager($this->provider('catalog'));
-        $manager->setConfiguration(['entityClass' => DefaultMapped::class, 'repositoryClass' => MappedRepository::class]);
+        $provider = $this->provider('catalog');
+        $factory = new DataProviderRepositoryFactory($provider, new CriteriaEvaluator());
+        $manager = new RepositoryManager($factory, $provider);
+        $factory->setConfiguration(['entityClass' => DefaultMapped::class, 'repositoryClass' => MappedRepository::class]);
         $repository = $manager->getRepository('catalog');
         $this->assertInstanceOf(MappedRepository::class, $repository);
         $this->assertInstanceOf(DefaultMapped::class, $repository->find('A'));
@@ -106,7 +110,7 @@ final class DataProviderRepositoryFactoryTest extends TestCase
     {
         $provider = $this->createMock(DataProviderInterface::class);
         $provider->expects($this->never())->method('fetch');
-        $factory = new DataProviderRepositoryFactory($provider, $this->configuration($settings));
+        $factory = new DataProviderRepositoryFactory($provider, new CriteriaEvaluator(), $this->configuration($settings));
         $this->expectException(ManagerException::class);
         $this->expectExceptionMessage($message);
         $factory->create($id);
@@ -114,7 +118,7 @@ final class DataProviderRepositoryFactoryTest extends TestCase
 
     public function testInvalidIdAttributeFromAnotherProviderIsRejectedAndTranslated(): void
     {
-        $factory = new DataProviderRepositoryFactory($this->provider('catalog', null), $this->configuration());
+        $factory = new DataProviderRepositoryFactory($this->provider('catalog', null), new CriteriaEvaluator(), $this->configuration());
         try {
             $factory->create('catalog');
             $this->fail('An invalid ID attribute must be rejected.');
@@ -127,7 +131,7 @@ final class DataProviderRepositoryFactoryTest extends TestCase
 
     public function testEmptyIdAttributeRemainsSupported(): void
     {
-        $factory = new DataProviderRepositoryFactory($this->provider('catalog', ''), $this->configuration());
+        $factory = new DataProviderRepositoryFactory($this->provider('catalog', ''), new CriteriaEvaluator(), $this->configuration());
         $repository = $factory->create('catalog');
         $this->assertInstanceOf(Repository::class, $repository);
         $this->assertSame(['A' => ['code' => 'A', 'name' => 'Alpha']], $repository->all());
@@ -137,7 +141,7 @@ final class DataProviderRepositoryFactoryTest extends TestCase
     private function configuration(array $settings = []): ConfigurationInterface
     {
         // Supplied configuration objects may have no schema; the factory must
-        // validate what it needs without assuming the manager validated it.
+        // validate the required settings itself.
         return new Configuration(array_replace([
             'entityClass' => Entity::class,
             'repositoryClass' => Repository::class,

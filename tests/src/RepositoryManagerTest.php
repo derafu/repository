@@ -18,18 +18,27 @@ use Derafu\Repository\Entity;
 use Derafu\Repository\Exception\ManagerException;
 use Derafu\Repository\Factory\DataProviderRepositoryFactory;
 use Derafu\Repository\Repository;
+use Derafu\Repository\Service\ArrayRepositorySourceProvider;
+use Derafu\Repository\Service\CriteriaEvaluator;
 use Derafu\Repository\Service\DataSource\DataSourceResolverRegistry;
 use Derafu\Repository\Service\DataSource\EnumDataSourceResolver;
 use Derafu\Repository\Service\DataSource\FileDataSource;
 use Derafu\Repository\Service\DataSource\FileDataSourceResolver;
 use Derafu\Repository\Service\DataSource\FileFormat\FileFormatReaderRegistry;
+use Derafu\Repository\Service\DataSource\FileFormat\JsonFileFormatReader;
 use Derafu\Repository\Service\DataSource\FileFormat\PhpFileFormatReader;
+use Derafu\Repository\Service\DataSource\FileFormat\YamlFileFormatReader;
 use Derafu\Repository\Service\RepositoryManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Throwable;
 
+#[UsesClass(ArrayRepositorySourceProvider::class)]
+#[UsesClass(CriteriaEvaluator::class)]
+#[UsesClass(JsonFileFormatReader::class)]
+#[UsesClass(YamlFileFormatReader::class)]
 #[CoversClass(RepositoryManager::class)]
 #[CoversClass(DataProviderRepositoryFactory::class)]
 #[CoversClass(Repository::class)]
@@ -70,7 +79,7 @@ class RepositoryManagerTest extends TestCase
     public function testRepositoryManagerCase(array $sources, array $case): void
     {
         $dataProvider = $this->createDataProvider($sources);
-        $manager = new RepositoryManager($dataProvider);
+        $manager = new RepositoryManager(new DataProviderRepositoryFactory($dataProvider, new CriteriaEvaluator()), $dataProvider);
 
         $expectedException = $case['expectedException'] ?? null;
 
@@ -139,7 +148,7 @@ class RepositoryManagerTest extends TestCase
             $fileSources[$sourceId] = $filePath;
         }
 
-        $dataProvider = new \Derafu\Repository\Service\DataProvider($fileSources);
+        $dataProvider = new \Derafu\Repository\Service\DataProvider([new ArrayRepositorySourceProvider($fileSources)], new DataSourceResolverRegistry([new EnumDataSourceResolver(), new FileDataSourceResolver(new FileFormatReaderRegistry([new PhpFileFormatReader(), new JsonFileFormatReader(), new YamlFileFormatReader()]))]));
 
         // Set default configuration to avoid normalization issues
         $dataProvider->setConfiguration([
@@ -162,7 +171,7 @@ class RepositoryManagerTest extends TestCase
         ];
 
         $dataProvider = $this->createDataProvider($sources);
-        $manager = new RepositoryManager($dataProvider);
+        $manager = new RepositoryManager(new DataProviderRepositoryFactory($dataProvider, new CriteriaEvaluator()), $dataProvider);
 
         $repository = $manager->getRepository('products');
 
@@ -181,7 +190,7 @@ class RepositoryManagerTest extends TestCase
         ];
 
         $dataProvider = $this->createDataProvider($sources);
-        $manager = new RepositoryManager($dataProvider);
+        $manager = new RepositoryManager(new DataProviderRepositoryFactory($dataProvider, new CriteriaEvaluator()), $dataProvider);
 
         // Test with string identifier (should use default entity class)
         $repository = $manager->getRepository('custom_entity');
@@ -194,7 +203,7 @@ class RepositoryManagerTest extends TestCase
     public function testErrorHandling(): void
     {
         $dataProvider = $this->createDataProvider([]);
-        $manager = new RepositoryManager($dataProvider);
+        $manager = new RepositoryManager(new DataProviderRepositoryFactory($dataProvider, new CriteriaEvaluator()), $dataProvider);
 
         // Test non-existent source
         $this->expectException(ManagerException::class);
@@ -211,7 +220,7 @@ class RepositoryManagerTest extends TestCase
         ];
 
         $dataProvider = $this->createDataProvider($sources);
-        $manager = new RepositoryManager($dataProvider);
+        $manager = new RepositoryManager(new DataProviderRepositoryFactory($dataProvider, new CriteriaEvaluator()), $dataProvider);
 
         $this->expectException(ManagerException::class);
         $manager->getRepository('NonExistent\Entity\Class');
@@ -227,7 +236,7 @@ class RepositoryManagerTest extends TestCase
         ];
 
         $dataProvider = $this->createDataProvider($sources);
-        $manager = new RepositoryManager($dataProvider);
+        $manager = new RepositoryManager(new DataProviderRepositoryFactory($dataProvider, new CriteriaEvaluator()), $dataProvider);
 
         $repository1 = $manager->getRepository('products');
         $repository2 = $manager->getRepository('products');
@@ -247,7 +256,7 @@ class RepositoryManagerTest extends TestCase
         ];
 
         $dataProvider = $this->createDataProvider($sources);
-        $manager = new RepositoryManager($dataProvider);
+        $manager = new RepositoryManager(new DataProviderRepositoryFactory($dataProvider, new CriteriaEvaluator()), $dataProvider);
 
         $productsRepo = $manager->getRepository('products');
         $usersRepo = $manager->getRepository('users');
@@ -295,7 +304,7 @@ class RepositoryManagerTest extends TestCase
         ];
 
         $dataProvider = $this->createDataProvider($sources);
-        $manager = new RepositoryManager($dataProvider);
+        $manager = new RepositoryManager(new DataProviderRepositoryFactory($dataProvider, new CriteriaEvaluator()), $dataProvider);
 
         $this->assertSame(
             ['products', 'users'],
@@ -314,7 +323,7 @@ class RepositoryManagerTest extends TestCase
         ];
 
         $dataProvider = $this->createDataProvider($sources);
-        $manager = new RepositoryManager($dataProvider);
+        $manager = new RepositoryManager(new DataProviderRepositoryFactory($dataProvider, new CriteriaEvaluator()), $dataProvider);
 
         // No se llamó getRepository() antes, y aun así debe listar el
         // identificador configurado.
@@ -331,7 +340,7 @@ class RepositoryManagerTest extends TestCase
         ];
 
         $dataProvider = $this->createDataProvider($sources);
-        $manager = new RepositoryManager($dataProvider);
+        $manager = new RepositoryManager(new DataProviderRepositoryFactory($dataProvider, new CriteriaEvaluator()), $dataProvider);
 
         $repository = $manager->getRepository('products');
 

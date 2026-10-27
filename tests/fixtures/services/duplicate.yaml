@@ -1,0 +1,9 @@
+imports:
+    - { resource: default.yaml }
+    - { resource: core.yaml }
+
+services:
+    test.duplicate_sources:
+        class: Derafu\Repository\Service\ArrayRepositorySourceProvider
+        arguments: [{ core: 'unused.php' }]
+        tags: ['derafu_repository.source_provider']

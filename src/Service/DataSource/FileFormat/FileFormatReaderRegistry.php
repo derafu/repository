@@ -33,17 +33,11 @@ final class FileFormatReaderRegistry implements FileFormatReaderRegistryInterfac
     private array $readers;
 
     /**
-     * Registry constructor.
-     *
-     * @param iterable<FileFormatReaderInterface>|null $readers Readers to
-     * register. When `null`, the built-in readers (PHP, JSON, YAML) are
-     * registered.
+     * @param iterable<FileFormatReaderInterface> $readers
      */
-    public function __construct(?iterable $readers = null)
+    public function __construct(iterable $readers)
     {
-        $this->readers = $readers !== null
-            ? [...$readers]
-            : $this->createDefaultReaders();
+        $this->readers = [...$readers];
     }
 
     /**
@@ -76,19 +70,5 @@ final class FileFormatReaderRegistry implements FileFormatReaderRegistryInterfac
             'No file format reader is registered for the "{extension}" extension.',
             'extension' => $extension,
         ]);
-    }
-
-    /**
-     * Creates the built-in readers.
-     *
-     * @return FileFormatReaderInterface[]
-     */
-    private function createDefaultReaders(): array
-    {
-        return [
-            new PhpFileFormatReader(),
-            new JsonFileFormatReader(),
-            new YamlFileFormatReader(),
-        ];
     }
 }

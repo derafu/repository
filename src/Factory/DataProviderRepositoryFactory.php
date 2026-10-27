@@ -12,10 +12,14 @@ declare(strict_types=1);
 
 namespace Derafu\Repository\Factory;
 
+use Derafu\Config\Contract\ConfigurableInterface;
 use Derafu\Config\Contract\ConfigurationInterface;
+use Derafu\Config\Trait\ConfigurableTrait;
+use Derafu\Repository\Contract\CriteriaEvaluatorInterface;
 use Derafu\Repository\Contract\DataProviderInterface;
 use Derafu\Repository\Contract\RepositoryFactoryInterface;
 use Derafu\Repository\Contract\RepositoryInterface;
+use Derafu\Repository\Entity;
 use Derafu\Repository\Exception\ManagerException;
 use Derafu\Repository\Mapping as DEM;
 use Derafu\Repository\Repository;
@@ -24,8 +28,16 @@ use ReflectionClass;
 /**
  * Builds in-memory repositories from normalized data and entity metadata.
  */
-final class DataProviderRepositoryFactory implements RepositoryFactoryInterface
+final class DataProviderRepositoryFactory implements RepositoryFactoryInterface, ConfigurableInterface
 {
+    use ConfigurableTrait;
+
+    /** @var array<string, array<string, mixed>> */
+    protected array $configurationSchema = [
+        'entityClass' => ['types' => 'string', 'default' => Entity::class],
+        'repositoryClass' => ['types' => 'string', 'default' => Repository::class],
+    ];
+
     /**
      * Interface suffix.
      *
@@ -61,10 +73,21 @@ final class DataProviderRepositoryFactory implements RepositoryFactoryInterface
      */
     private const ENTITY_CLASS_NAMESPACE = 'Entity';
 
+    /** @param array<array-key, mixed>|ConfigurationInterface $config */
     public function __construct(
         private readonly DataProviderInterface $dataProvider,
-        private readonly ConfigurationInterface $configuration,
+        private readonly CriteriaEvaluatorInterface $criteriaEvaluator,
+        array|ConfigurationInterface $config = [],
     ) {
+        $this->setConfiguration($config);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getConfigurationSchema(): array
+    {
+        return $this->configurationSchema;
     }
 
     /**
@@ -86,7 +109,7 @@ final class DataProviderRepositoryFactory implements RepositoryFactoryInterface
             ]);
         }
 
-        return new $repositoryClass($data, $entityClass, $idAttribute);
+        return new $repositoryClass($data, $entityClass, $idAttribute, $this->criteriaEvaluator);
     }
 
     /**
@@ -117,7 +140,7 @@ final class DataProviderRepositoryFactory implements RepositoryFactoryInterface
         // class. If it doesn't have "\" then it doesn't have a namespace, in
         // this case it's assumed it's not a class.
         else {
-            $entityClass = $this->configuration->get('entityClass');
+            $entityClass = $this->getConfiguration()->get('entityClass');
         }
 
         // Throw error if the class doesn't exist as it might have been
@@ -189,7 +212,7 @@ final class DataProviderRepositoryFactory implements RepositoryFactoryInterface
         }
 
         return $this->requireRepositoryClass(
-            $this->configuration->get('repositoryClass')
+            $this->getConfiguration()->get('repositoryClass')
         );
     }
 

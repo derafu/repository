@@ -15,7 +15,6 @@ namespace Derafu\Repository\Service\DataSource;
 use Derafu\Repository\Contract\DataSourceResolverInterface;
 use Derafu\Repository\Contract\DataSourceResolverRegistryInterface;
 use Derafu\Repository\Exception\DataProviderException;
-use Derafu\Repository\Service\DataSource\FileFormat\FileFormatReaderRegistry;
 
 /**
  * Registry of data source resolvers.
@@ -34,17 +33,11 @@ final class DataSourceResolverRegistry implements DataSourceResolverRegistryInte
     private array $resolvers;
 
     /**
-     * Registry constructor.
-     *
-     * @param iterable<DataSourceResolverInterface>|null $resolvers Resolvers
-     * to register. When `null`, the built-in resolvers (`enum:` and file
-     * path, in that order) are registered.
+     * @param iterable<DataSourceResolverInterface> $resolvers
      */
-    public function __construct(?iterable $resolvers = null)
+    public function __construct(iterable $resolvers)
     {
-        $this->resolvers = $resolvers !== null
-            ? [...$resolvers]
-            : $this->createDefaultResolvers();
+        $this->resolvers = [...$resolvers];
     }
 
     /**
@@ -73,18 +66,5 @@ final class DataSourceResolverRegistry implements DataSourceResolverRegistryInte
             'No data source resolver is registered for "{source}".',
             'source' => $source,
         ]);
-    }
-
-    /**
-     * Creates the built-in resolvers.
-     *
-     * @return DataSourceResolverInterface[]
-     */
-    private function createDefaultResolvers(): array
-    {
-        return [
-            new EnumDataSourceResolver(),
-            new FileDataSourceResolver(new FileFormatReaderRegistry()),
-        ];
     }
 }

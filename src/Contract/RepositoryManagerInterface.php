@@ -12,13 +12,12 @@ declare(strict_types=1);
 
 namespace Derafu\Repository\Contract;
 
-use Derafu\Config\Contract\ConfigurableInterface;
 use Derafu\Repository\Exception\ManagerException;
 
 /**
  * Interface for entity manager.
  */
-interface RepositoryManagerInterface extends ConfigurableInterface
+interface RepositoryManagerInterface
 {
     /**
      * Returns the repository associated with an entity class or repository

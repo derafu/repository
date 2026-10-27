@@ -15,6 +15,8 @@ namespace Derafu\TestsRepository;
 use Derafu\Repository\Exception\EntityException;
 use Derafu\Repository\Factory\DataProviderRepositoryFactory;
 use Derafu\Repository\Repository;
+use Derafu\Repository\Service\ArrayRepositorySourceProvider;
+use Derafu\Repository\Service\CriteriaEvaluator;
 use Derafu\Repository\Service\DataProvider;
 use Derafu\Repository\Service\DataSource\DataSourceResolverRegistry;
 use Derafu\Repository\Service\DataSource\EnumDataSource;
@@ -25,8 +27,11 @@ use Derafu\Repository\Service\RepositoryManager;
 use Derafu\TestsRepository\Fixture\PureStatus;
 use Derafu\TestsRepository\Fixture\Status;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
+#[UsesClass(ArrayRepositorySourceProvider::class)]
+#[UsesClass(CriteriaEvaluator::class)]
 #[CoversClass(Repository::class)]
 #[CoversClass(DataProvider::class)]
 #[CoversClass(RepositoryManager::class)]
@@ -115,12 +120,13 @@ class EnumRepositoryTest extends TestCase
     public function testEndToEndThroughRepositoryManagerWithACustomIdAttribute(): void
     {
         $dataProvider = new DataProvider(
-            [Status::class => 'enum:' . Status::class],
+            [new ArrayRepositorySourceProvider([Status::class => 'enum:' . Status::class])],
+            new DataSourceResolverRegistry([new EnumDataSourceResolver()]),
             config: [
                 'normalization' => ['idAttribute' => 'codigo'],
             ]
         );
-        $manager = new RepositoryManager($dataProvider);
+        $manager = new RepositoryManager(new DataProviderRepositoryFactory($dataProvider, new CriteriaEvaluator()), $dataProvider);
 
         $repository = $manager->getRepository(Status::class);
 

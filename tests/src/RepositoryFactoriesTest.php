@@ -18,13 +18,17 @@ use Derafu\Repository\Contract\RepositoryInterface;
 use Derafu\Repository\Exception\ManagerException;
 use Derafu\Repository\Factory\DataProviderRepositoryFactory;
 use Derafu\Repository\Repository;
+use Derafu\Repository\Service\ArrayRepositorySourceProvider;
+use Derafu\Repository\Service\CriteriaEvaluator;
 use Derafu\Repository\Service\DataProvider;
 use Derafu\Repository\Service\DataSource\DataSourceResolverRegistry;
 use Derafu\Repository\Service\DataSource\EnumDataSourceResolver;
 use Derafu\Repository\Service\DataSource\FileDataSource;
 use Derafu\Repository\Service\DataSource\FileDataSourceResolver;
 use Derafu\Repository\Service\DataSource\FileFormat\FileFormatReaderRegistry;
+use Derafu\Repository\Service\DataSource\FileFormat\JsonFileFormatReader;
 use Derafu\Repository\Service\DataSource\FileFormat\PhpFileFormatReader;
+use Derafu\Repository\Service\DataSource\FileFormat\YamlFileFormatReader;
 use Derafu\Repository\Service\RepositoryManager;
 use Derafu\Repository\Translation\RepositoryTranslationResourceProvider;
 use Derafu\TestsRepository\Fixture\Factory\SqliteRepository;
@@ -36,6 +40,10 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use stdClass;
 
+#[UsesClass(ArrayRepositorySourceProvider::class)]
+#[UsesClass(CriteriaEvaluator::class)]
+#[UsesClass(JsonFileFormatReader::class)]
+#[UsesClass(YamlFileFormatReader::class)]
 #[CoversClass(RepositoryManager::class)]
 #[UsesClass(DataProviderRepositoryFactory::class)]
 #[UsesClass(Repository::class)]
@@ -106,7 +114,7 @@ final class RepositoryFactoriesTest extends TestCase
         $provider->expects($this->never())->method('fetch');
         $provider->expects($this->never())->method('getConfiguration');
         $provider->expects($this->once())->method('getSources')->willReturn(['items', 'files']);
-        $manager = new RepositoryManager($provider, ['items' => $factory, 'database' => $factory]);
+        $manager = new RepositoryManager(dataProvider: $provider, factories: ['items' => $factory, 'database' => $factory]);
         $this->assertSame(['items', 'files', 'database'], $manager->getAvailableRepositories());
         $this->assertSame($repository, $manager->getRepository('items'));
         $manager->getRepository('items'); // The factory expectation allows only one creation.
@@ -117,8 +125,8 @@ final class RepositoryFactoriesTest extends TestCase
         $databaseRepository = $this->createStub(RepositoryInterface::class);
         $factory = $this->createMock(RepositoryFactoryInterface::class);
         $factory->expects($this->once())->method('create')->with('database')->willReturn($databaseRepository);
-        $provider = new DataProvider(['files' => dirname(__DIR__) . '/fixtures/products.php']);
-        $manager = new RepositoryManager($provider, ['database' => $factory]);
+        $provider = new DataProvider([new ArrayRepositorySourceProvider(['files' => dirname(__DIR__) . '/fixtures/products.php'])], new DataSourceResolverRegistry([new EnumDataSourceResolver(), new FileDataSourceResolver(new FileFormatReaderRegistry([new PhpFileFormatReader(), new JsonFileFormatReader(), new YamlFileFormatReader()]))]));
+        $manager = new RepositoryManager(new DataProviderRepositoryFactory($provider, new CriteriaEvaluator()), $provider, ['database' => $factory]);
         $this->assertSame(['files', 'database'], $manager->getAvailableRepositories());
         $this->assertSame($databaseRepository, $manager->getRepository('database'));
         $files = $manager->getRepository('files');

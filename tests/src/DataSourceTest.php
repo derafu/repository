@@ -16,6 +16,7 @@ use ArrayObject;
 use Derafu\Repository\Contract\DataSourceInterface;
 use Derafu\Repository\Contract\FileFormatReaderInterface;
 use Derafu\Repository\Exception\DataProviderException;
+use Derafu\Repository\Service\ArrayRepositorySourceProvider;
 use Derafu\Repository\Service\DataProvider;
 use Derafu\Repository\Service\DataSource\DataSourceResolverRegistry;
 use Derafu\Repository\Service\DataSource\FileDataSource;
@@ -26,8 +27,10 @@ use Derafu\Repository\Service\DataSource\FileFormat\PhpFileFormatReader;
 use Derafu\Repository\Service\DataSource\FileFormat\YamlFileFormatReader;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider as TestDataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
+#[UsesClass(ArrayRepositorySourceProvider::class)]
 #[CoversClass(FileDataSource::class)]
 #[CoversClass(FileFormatReaderRegistry::class)]
 #[CoversClass(PhpFileFormatReader::class)]
@@ -58,7 +61,7 @@ class DataSourceTest extends TestCase
     #[TestDataProvider('provideValidFiles')]
     public function testFileDataSourceReadsEachSupportedFormat(string $filepath): void
     {
-        $source = new FileDataSource($filepath, new FileFormatReaderRegistry());
+        $source = new FileDataSource($filepath, new FileFormatReaderRegistry([new PhpFileFormatReader(), new JsonFileFormatReader(), new YamlFileFormatReader()]));
 
         $this->assertSame(self::EXPECTED_DATA, $source->read());
     }
@@ -80,7 +83,7 @@ class DataSourceTest extends TestCase
     {
         $this->expectException(DataProviderException::class);
 
-        (new FileDataSource($filepath, new FileFormatReaderRegistry()))->read();
+        (new FileDataSource($filepath, new FileFormatReaderRegistry([new PhpFileFormatReader(), new JsonFileFormatReader(), new YamlFileFormatReader()])))->read();
     }
 
     public function testFileFormatReaderRegistryThrowsForUnsupportedExtension(): void
@@ -89,7 +92,7 @@ class DataSourceTest extends TestCase
 
         $this->expectException(DataProviderException::class);
 
-        (new FileDataSource($dir . '/unsupported.txt', new FileFormatReaderRegistry()))->read();
+        (new FileDataSource($dir . '/unsupported.txt', new FileFormatReaderRegistry([new PhpFileFormatReader(), new JsonFileFormatReader(), new YamlFileFormatReader()])))->read();
     }
 
     public function testFileFormatReaderRegistryAcceptsAnExplicitListOfReaders(): void
@@ -126,7 +129,7 @@ class DataSourceTest extends TestCase
             }
         };
 
-        $registry = new FileFormatReaderRegistry();
+        $registry = new FileFormatReaderRegistry([new PhpFileFormatReader(), new JsonFileFormatReader(), new YamlFileFormatReader()]);
         $registry->register($customReader);
 
         $source = new FileDataSource($dir . '/unsupported.txt', $registry);
@@ -151,7 +154,7 @@ class DataSourceTest extends TestCase
             }
         };
 
-        $dataProvider = new DataProvider(['status' => $customSource]);
+        $dataProvider = new DataProvider([new ArrayRepositorySourceProvider(['status' => $customSource])], new DataSourceResolverRegistry([]));
         $dataProvider->setConfiguration([
             'normalization' => [
                 'idAttribute' => 'id',

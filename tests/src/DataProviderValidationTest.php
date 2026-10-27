@@ -15,6 +15,7 @@ namespace Derafu\TestsRepository;
 use Derafu\Config\Configuration;
 use Derafu\Repository\Contract\DataSourceInterface;
 use Derafu\Repository\Exception\DataProviderException;
+use Derafu\Repository\Service\ArrayRepositorySourceProvider;
 use Derafu\Repository\Service\DataProvider;
 use Derafu\Repository\Service\DataSource\DataSourceResolverRegistry;
 use Derafu\Repository\Translation\RepositoryTranslationResourceProvider;
@@ -28,6 +29,7 @@ use RuntimeException;
 use stdClass;
 use Throwable;
 
+#[UsesClass(ArrayRepositorySourceProvider::class)]
 #[CoversClass(DataProvider::class)]
 #[UsesClass(DataSourceResolverRegistry::class)]
 #[UsesClass(DataProviderException::class)]
@@ -189,7 +191,7 @@ final class DataProviderValidationTest extends TestCase
 
     private function createProvider(CountingRepositorySource $source, ?CacheInterface $cache = null): DataProvider
     {
-        return new DataProvider(['items' => $source], $cache, sourceResolvers: new DataSourceResolverRegistry([]));
+        return new DataProvider([new ArrayRepositorySourceProvider(['items' => $source])], new DataSourceResolverRegistry([]), $cache);
     }
 }
 
