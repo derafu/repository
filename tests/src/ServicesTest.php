@@ -14,6 +14,7 @@ namespace Derafu\TestsRepository;
 
 use Derafu\Repository\Contract\DataProviderInterface;
 use Derafu\Repository\Contract\FileFormatReaderRegistryInterface;
+use Derafu\Repository\Contract\RepositoryFactoryInterface;
 use Derafu\Repository\Contract\RepositoryManagerInterface;
 use Derafu\Repository\Entity;
 use Derafu\Repository\Exception\DataProviderException;
@@ -80,23 +81,22 @@ final class ServicesTest extends TestCase
         return $services;
     }
 
-    public function testDefaultConfigurationConstructsEveryServiceAndItsAliases(): void
+    public function testDefaultConfigurationConstructsEveryRegisteredService(): void
     {
         $services = $this->services();
         foreach (array_keys($services->getProvidedServices()) as $id) {
             self::assertTrue(class_exists($id) || interface_exists($id));
             self::assertInstanceOf($id, $services->get($id));
         }
-        self::assertSame($services->get(RepositoryManagerInterface::class), $services->get(RepositoryManager::class));
-        self::assertSame($services->get(DataProviderInterface::class), $services->get(DataProvider::class));
         $manager = $services->get(RepositoryManagerInterface::class);
         self::assertInstanceOf(RepositoryManagerInterface::class, $manager);
+        self::assertSame($manager, $this->kernel->getContainer()->get(RepositoryManagerInterface::class));
         self::assertSame([], $manager->getAvailableRepositories());
         $provider = $services->get(DataProviderInterface::class);
         self::assertInstanceOf(DataProviderInterface::class, $provider);
         self::assertSame('id', $provider->getConfiguration()->get('normalization.idAttribute'));
         self::assertSame('name', $provider->getConfiguration()->get('normalization.nameAttribute'));
-        $factory = $services->get(DataProviderRepositoryFactory::class);
+        $factory = $services->get(RepositoryFactoryInterface::class);
         self::assertInstanceOf(DataProviderRepositoryFactory::class, $factory);
         self::assertSame(Repository::class, $factory->getConfiguration()->get('repositoryClass'));
     }

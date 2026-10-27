@@ -18,12 +18,11 @@ services:
 
     Derafu\Repository\Contract\RepositoryManagerInterface:
         class: Derafu\Repository\Service\RepositoryManager
+        public: true
         arguments:
-            $defaultFactory: '@Derafu\Repository\Factory\DataProviderRepositoryFactory'
+            $defaultFactory: '@Derafu\Repository\Contract\RepositoryFactoryInterface'
             $dataProvider: '@Derafu\Repository\Contract\DataProviderInterface'
             $factories: !tagged_iterator { tag: 'derafu_repository.repository_factory', index_by: 'repository' }
-    Derafu\Repository\Service\RepositoryManager:
-        alias: Derafu\Repository\Contract\RepositoryManagerInterface
 
     Derafu\Repository\Contract\DataProviderInterface:
         class: Derafu\Repository\Service\DataProvider
@@ -32,29 +31,24 @@ services:
             $sourceResolvers: '@Derafu\Repository\Contract\DataSourceResolverRegistryInterface'
             $cache: null
             $config: '%derafu_repository.data_provider.config%'
-    Derafu\Repository\Service\DataProvider:
-        alias: Derafu\Repository\Contract\DataProviderInterface
 
     Derafu\Repository\Service\ArrayRepositorySourceProvider:
         arguments:
             $sources: '%derafu_repository.sources%'
         tags: ['derafu_repository.source_provider']
 
-    Derafu\Repository\Factory\DataProviderRepositoryFactory:
+    Derafu\Repository\Contract\RepositoryFactoryInterface:
+        class: Derafu\Repository\Factory\DataProviderRepositoryFactory
         arguments:
             $config: '%derafu_repository.repository_factory.config%'
 
     Derafu\Repository\Contract\CriteriaEvaluatorInterface:
         class: Derafu\Repository\Service\CriteriaEvaluator
-    Derafu\Repository\Service\CriteriaEvaluator:
-        alias: Derafu\Repository\Contract\CriteriaEvaluatorInterface
 
     Derafu\Repository\Contract\DataSourceResolverRegistryInterface:
         class: Derafu\Repository\Service\DataSource\DataSourceResolverRegistry
         arguments:
             $resolvers: !tagged_iterator derafu_repository.source_resolver
-    Derafu\Repository\Service\DataSource\DataSourceResolverRegistry:
-        alias: Derafu\Repository\Contract\DataSourceResolverRegistryInterface
 
     Derafu\Repository\Service\DataSource\EnumDataSourceResolver:
         tags:
@@ -67,8 +61,6 @@ services:
         class: Derafu\Repository\Service\DataSource\FileFormat\FileFormatReaderRegistry
         arguments:
             $readers: !tagged_iterator derafu_repository.file_format_reader
-    Derafu\Repository\Service\DataSource\FileFormat\FileFormatReaderRegistry:
-        alias: Derafu\Repository\Contract\FileFormatReaderRegistryInterface
 
     Derafu\Repository\Service\DataSource\FileFormat\PhpFileFormatReader:
         tags: ['derafu_repository.file_format_reader']
