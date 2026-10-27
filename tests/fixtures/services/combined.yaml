@@ -4,11 +4,11 @@ imports:
     - { resource: pro.yaml }
 
 parameters:
-    derafu_repository.sources:
+    derafu.repository.sources:
         parameter: '%kernel.project_dir%/tests/fixtures/services/core.php'
-    derafu_repository.data_provider.config:
+    derafu.repository.data_provider.config:
         normalization: { idAttribute: codigo, nameAttribute: glosa }
-    derafu_repository.repository_factory.config:
+    derafu.repository.repository_factory.config:
         entityClass: Derafu\TestsRepository\Fixture\Factory\Entity\DefaultMapped
         repositoryClass: Derafu\TestsRepository\Fixture\Factory\MappedRepository
 

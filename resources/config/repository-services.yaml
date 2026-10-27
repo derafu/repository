@@ -5,9 +5,9 @@
 #       - { resource: '../vendor/derafu/repository/resources/config/repository-services.yaml' }
 
 parameters:
-    derafu_repository.sources: {}
-    derafu_repository.data_provider.config: {}
-    derafu_repository.repository_factory.config: {}
+    derafu.repository.sources: {}
+    derafu.repository.data_provider.config: {}
+    derafu.repository.repository_factory.config: {}
 
 services:
 
@@ -30,17 +30,17 @@ services:
             $sourceProviders: !tagged_iterator derafu_repository.source_provider
             $sourceResolvers: '@Derafu\Repository\Contract\DataSourceResolverRegistryInterface'
             $cache: null
-            $config: '%derafu_repository.data_provider.config%'
+            $config: '%derafu.repository.data_provider.config%'
 
     Derafu\Repository\Service\ArrayRepositorySourceProvider:
         arguments:
-            $sources: '%derafu_repository.sources%'
+            $sources: '%derafu.repository.sources%'
         tags: ['derafu_repository.source_provider']
 
     Derafu\Repository\Contract\RepositoryFactoryInterface:
         class: Derafu\Repository\Factory\DataProviderRepositoryFactory
         arguments:
-            $config: '%derafu_repository.repository_factory.config%'
+            $config: '%derafu.repository.repository_factory.config%'
 
     Derafu\Repository\Contract\CriteriaEvaluatorInterface:
         class: Derafu\Repository\Service\CriteriaEvaluator
