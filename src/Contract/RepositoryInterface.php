@@ -26,7 +26,7 @@ use Doctrine\Common\Collections\Selectable;
  * not true, except those that ask for null, and an object that does not have a
  * field has it as null. A field that the repository does not know is an error.
  *
- * @template T of object
+ * @template-covariant T of object
  * @extends Selectable<array-key, T>
  */
 interface RepositoryInterface extends Selectable
