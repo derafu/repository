@@ -26,7 +26,8 @@ use Doctrine\Common\Collections\Selectable;
  * not true, except those that ask for null, and an object that does not have a
  * field has it as null. A field that the repository does not know is an error.
  *
- * @extends Selectable<array-key, object>
+ * @template T of object
+ * @extends Selectable<array-key, T>
  */
 interface RepositoryInterface extends Selectable
 {
@@ -36,14 +37,14 @@ interface RepositoryInterface extends Selectable
      * @param mixed $id Object identifier
      * @param mixed $lockMode Not used in this implementation.
      * @param mixed $lockVersion Not used in this implementation.
-     * @return object|null The found object or null if it doesn't exist
+     * @return T|null The found object or null if it doesn't exist
      */
     public function find(mixed $id, $lockMode = null, $lockVersion = null): ?object;
 
     /**
      * Finds all objects in the repository.
      *
-     * @return object[] Array of found objects
+     * @return T[] Array of found objects
      */
     public function findAll(): array;
 
@@ -63,7 +64,7 @@ interface RepositoryInterface extends Selectable
      * @param array<array-key, mixed>|null $orderBy Ordering criteria ['field' => 'ASC|DESC'].
      * @param int|null $limit Maximum number of results to return.
      * @param int|null $offset Number of results to skip.
-     * @return object[] Array of objects that meet the criteria.
+     * @return T[] Array of objects that meet the criteria.
      * @throws \Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException
      * If a field is not known by the repository, if a direction is not ASC or
      * DESC, or if the limit or the offset is negative.
@@ -82,7 +83,7 @@ interface RepositoryInterface extends Selectable
      *
      * @param array<array-key, mixed> $criteria Search criteria in format ['field' => 'value'].
      * @param array<array-key, mixed>|null $orderBy Ordering criteria ['field' => 'ASC|DESC'].
-     * @return object|null The first object that meets the criteria or null if
+     * @return T|null The first object that meets the criteria or null if
      * it doesn't exist.
      * @throws \Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException
      * If a field is not known by the repository or if a direction is not ASC
@@ -111,7 +112,7 @@ interface RepositoryInterface extends Selectable
      *
      * @param Criteria $criteria The `Criteria` object that defines the
      * conditions, order and limits of the results.
-     * @return ReadableCollection<array-key, object>&Selectable<array-key, object>
+     * @return ReadableCollection<array-key, T>&Selectable<array-key, T>
      * @throws \Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException
      * If the `Criteria` uses a field that is not known by the repository or an
      * operator that is not supported.
@@ -126,7 +127,7 @@ interface RepositoryInterface extends Selectable
      *
      * @param Criteria $criteria The `Criteria` object that defines the
      * conditions, order and limits of the results.
-     * @return array<array-key, mixed> An array with the objects that meet the criterion.
+     * @return array<array-key, T> An array with the objects that meet the criterion.
      * @throws \Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException
      * If the `Criteria` uses a field that is not known by the repository or an
      * operator that is not supported.

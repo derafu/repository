@@ -24,7 +24,7 @@ use Exception;
  */
 class RepositoryManager implements RepositoryManagerInterface
 {
-    /** @var array<string, RepositoryInterface> */
+    /** @var array<string, RepositoryInterface<object>> */
     private array $loaded = [];
 
     /** @var array<string, RepositoryFactoryInterface> */
@@ -74,6 +74,9 @@ class RepositoryManager implements RepositoryManagerInterface
         ]));
     }
 
+    /**
+     * @return RepositoryInterface<object>
+     */
     private function loadRepository(string $repository): RepositoryInterface
     {
         if (isset($this->factories[$repository])) {

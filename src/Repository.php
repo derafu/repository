@@ -22,6 +22,7 @@ use Derafu\Repository\Exception\EntityException;
 use Derafu\Repository\Service\CriteriaEvaluator;
 use Derafu\Support\Factory;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
+use Derafu\Value\ValueCaster;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
 use stdClass;
@@ -33,13 +34,16 @@ use Traversable;
  *
  * Provides standard methods to access and search objects/entities from a data
  * source.
+ *
+ * @template T of object
+ * @implements RepositoryInterface<T>
  */
 class Repository implements RepositoryInterface
 {
     /**
      * Entity class where data obtained through the repository will be placed.
      *
-     * @var string
+     * @var class-string<T>
      */
     protected string $entityClass = stdClass::class;
 
@@ -69,7 +73,7 @@ class Repository implements RepositoryInterface
      *
      * @param string|array<array-key, mixed>|ArrayAccess<*, *>|ArrayObject<*, *> $source Data array or PHP
      * file path.
-     * @param string|null $entityClass Entity class associated with the
+     * @param class-string<T>|null $entityClass Entity class associated with the
      * repository.
      * @param string|null $idAttribute Name of the ID attribute that must be
      * ensured to exist in elements loaded from the repository.
@@ -228,7 +232,7 @@ class Repository implements RepositoryInterface
     /**
      * {@inheritDoc}
      *
-     * @return ArrayCollection<int, object>
+     * @return ArrayCollection<int, T>
      */
     public function matching(Criteria $criteria): ArrayCollection
     {
@@ -404,7 +408,7 @@ class Repository implements RepositoryInterface
      * with `new`.
      *
      * @param array<array-key, mixed> $data Data that will be assigned to the entity.
-     * @return object Entity instance with loaded data.
+     * @return T Entity instance with loaded data.
      * @throws EntityException If an enum entity cannot be resolved.
      */
     protected function createEntity(array $data): object
@@ -422,7 +426,10 @@ class Repository implements RepositoryInterface
             }
 
             try {
-                return ($this->entityClass)::from($value);
+                return ValueCaster::requireObject(
+                    ($this->entityClass)::from($value),
+                    $this->entityClass
+                );
             } catch (Throwable $e) {
                 throw new EntityException([
                     'Could not create enum entity {entity}: {error}',
@@ -447,7 +454,10 @@ class Repository implements RepositoryInterface
             ]);
         }
 
-        return Factory::create($data, $entityClass);
+        return ValueCaster::requireObject(
+            Factory::create($data, $entityClass),
+            $entityClass
+        );
     }
 
     /**

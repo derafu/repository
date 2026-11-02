@@ -28,6 +28,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use stdClass;
 
 #[CoversClass(Repository::class)]
@@ -219,12 +220,15 @@ final class RepositoryRowsTest extends TestCase
     public function testAMissingEntityClassIsRejectedOnlyWhenAnEntityIsCreated(): void
     {
         $class = 'Derafu\\TestsRepository\\Fixture\\MissingEntity';
-        $empty = new Repository([], $class);
+
+        $empty = new Repository([]);
+        $this->setEntityClass($empty, $class);
         $this->assertSame($class, $empty->getClassName());
         $this->assertNull($empty->find('missing'));
         $this->assertSame([], $empty->findAll());
 
-        $repository = new Repository(['record' => []], $class);
+        $repository = new Repository(['record' => []]);
+        $this->setEntityClass($repository, $class);
         try {
             $repository->find('record');
             $this->fail('A nonexistent entity class must be rejected.');
@@ -234,5 +238,15 @@ final class RepositoryRowsTest extends TestCase
             $this->assertSame('La clase de entidad ' . $class . ' no existe.', $exception->trans($translator));
             $this->assertSame(['record' => []], $repository->all());
         }
+    }
+
+    /**
+     * Sets an entity class that the type of the constructor does not allow.
+     *
+     * @param Repository<object> $repository
+     */
+    private function setEntityClass(Repository $repository, string $class): void
+    {
+        (new ReflectionProperty($repository, 'entityClass'))->setValue($repository, $class);
     }
 }

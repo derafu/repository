@@ -23,6 +23,8 @@ use stdClass;
  * Test adapter for a two-column catalogue, independent of ContainerInterface.
  *
  * It deliberately has a different constructor from the in-memory repository.
+ *
+ * @implements RepositoryInterface<object>
  */
 final class SqliteRepository implements RepositoryInterface
 {

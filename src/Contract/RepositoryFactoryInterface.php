@@ -22,6 +22,8 @@ interface RepositoryFactoryInterface
      *
      * The identifier may be an entity class, an interface or an application ID.
      * Repository instances are reused by the manager, not by this factory.
+     *
+     * @return RepositoryInterface<object>
      */
     public function create(string $repository): RepositoryInterface;
 }

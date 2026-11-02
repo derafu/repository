@@ -23,8 +23,14 @@ interface RepositoryManagerInterface
      * Returns the repository associated with an entity class or repository
      * identifier.
      *
-     * @param string $repository Entity class or repository identifier.
-     * @return RepositoryInterface Requested repository.
+     * When an entity class is given the repository is typed with that entity,
+     * so its methods return instances of it. With any other identifier the
+     * repository is typed with `object`.
+     *
+     * @template T of object
+     * @param string|class-string<T> $repository Entity class or repository
+     * identifier.
+     * @return ($repository is class-string<T> ? RepositoryInterface<T> : RepositoryInterface<object>)
      * @throws ManagerException
      */
     public function getRepository(string $repository): RepositoryInterface;

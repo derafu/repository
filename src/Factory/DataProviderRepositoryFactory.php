@@ -196,7 +196,7 @@ final class DataProviderRepositoryFactory implements RepositoryFactoryInterface,
      * returned.
      *
      * @param class-string $entityClass Entity class.
-     * @return class-string<Repository> Repository class.
+     * @return class-string<Repository<object>> Repository class.
      */
     private function resolveRepositoryClass(string $entityClass): string
     {
@@ -221,7 +221,7 @@ final class DataProviderRepositoryFactory implements RepositoryFactoryInterface,
      *
      * Other implementations belong in explicitly registered factories.
      *
-     * @return class-string<Repository>
+     * @return class-string<Repository<object>>
      */
     private function requireRepositoryClass(mixed $repositoryClass): string
     {

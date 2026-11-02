@@ -46,7 +46,7 @@ use stdClass;
 #[UsesClass(RepositoryTranslationResourceProvider::class)]
 final class DataProviderRepositoryFactoryTest extends TestCase
 {
-    /** @return array<string, array{string, class-string<Entity>, class-string<Repository>}> */
+    /** @return array<string, array{string, class-string<Entity>, class-string<Repository<object>>}> */
     public static function mappings(): array
     {
         return [
@@ -60,7 +60,7 @@ final class DataProviderRepositoryFactoryTest extends TestCase
 
     /**
      * @param class-string<Entity> $entityClass
-     * @param class-string<Repository> $repositoryClass
+     * @param class-string<Repository<object>> $repositoryClass
      */
     #[DataProvider('mappings')]
     public function testMappingsAndNormalizationKeepExistingEntitiesAndRows(string $id, string $entityClass, string $repositoryClass): void

@@ -34,7 +34,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 final class ParityTest extends DoctrineTestCase
 {
     /**
-     * @param Closure(EntityRepository<Item>|Repository): mixed $operation
+     * @param Closure(EntityRepository<Item>|Repository<Item>): mixed $operation
      */
     #[DataProvider('operations')]
     public function testBehavesLikeDoctrine(Closure $operation, bool $fails): void
@@ -57,7 +57,7 @@ final class ParityTest extends DoctrineTestCase
     }
 
     /**
-     * @return array<string, array{Closure(EntityRepository<Item>|Repository): mixed, bool}>
+     * @return array<string, array{Closure(EntityRepository<Item>|Repository<Item>): mixed, bool}>
      */
     public static function operations(): array
     {

@@ -46,6 +46,7 @@ abstract class DoctrineTestCase extends TestCase
     /** @var EntityRepository<Item> */
     protected EntityRepository $database;
 
+    /** @var Repository<Item> */
     protected Repository $file;
 
     protected function setUp(): void
@@ -81,7 +82,7 @@ abstract class DoctrineTestCase extends TestCase
     }
 
     /**
-     * @param EntityRepository<Item>|Repository $repository
+     * @param EntityRepository<Item>|Repository<Item> $repository
      * @return array<array-key, mixed>
      */
     protected static function matching(EntityRepository|Repository $repository, Criteria $criteria): array
@@ -90,8 +91,8 @@ abstract class DoctrineTestCase extends TestCase
     }
 
     /**
-     * @param Closure(EntityRepository<Item>|Repository): mixed $operation
-     * @param EntityRepository<Item>|Repository $repository
+     * @param Closure(EntityRepository<Item>|Repository<Item>): mixed $operation
+     * @param EntityRepository<Item>|Repository<Item> $repository
      * @return array{mixed, Throwable|null}
      */
     protected static function execute(Closure $operation, EntityRepository|Repository $repository): array

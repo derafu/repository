@@ -155,6 +155,9 @@ final class RepositoryFactoriesTest extends TestCase
         $factory = new class ($repository) implements RepositoryFactoryInterface {
             public int $attempts = 0;
 
+            /**
+             * @param RepositoryInterface<object> $repository
+             */
             public function __construct(private readonly RepositoryInterface $repository)
             {
             }

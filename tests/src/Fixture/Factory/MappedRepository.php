@@ -14,6 +14,9 @@ namespace Derafu\TestsRepository\Fixture\Factory;
 
 use Derafu\Repository\Repository;
 
+/**
+ * @extends Repository<object>
+ */
 class MappedRepository extends Repository
 {
 }
